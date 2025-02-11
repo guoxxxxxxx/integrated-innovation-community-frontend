@@ -7,7 +7,7 @@
       <a-input-search placeholder="搜索..." style="width: 200px; margin-right: 12px" :allowClear="true" enter-button />
       <a-button type="text" style="margin-right: -12px">首页</a-button>
       <a-button type="text" style="margin-right: -12px">论坛</a-button>
-      <a-button type="text" style="margin-right: -12px">活动</a-button>
+      <a-button type="text" style="margin-right: -12px" @click="openAuthorBlog">作者的博客</a-button>
       <div class="message-dropdown">
         <a-button type="text">消息</a-button>
         <div class="dropdown-content">
@@ -64,13 +64,16 @@
               <span class="benefit">💬发表评论/点赞</span>
             </div>
             <div class="divider"></div>
-            <a-button type="primary" block class="login-btn">立即登录</a-button>
+            <a-button type="primary" block class="login-btn" @click="store.setShowLoginBox(true)">立即登录</a-button>
             <div class="divider"></div>
-            <p class="register-prompt">还没有账号？<a href="#" class="register-link">点我登录</a></p>
+            <p class="register-prompt">还没有账号？<a href="#" class="register-link" @click="store.setShowRegisterBox(true)">点我注册</a></p>
           </div>
         </div>
       </div>
     </div>
+    <LoginDiolague />
+    <RegisterDiolague />
+    <ResetDiolague />
   </div>
 </template>
 
@@ -78,7 +81,10 @@
 import { Button as AButton, Input, Avatar as AAvatar } from 'ant-design-vue';
 import { UserOutlined } from '@ant-design/icons-vue';
 import { ref, reactive, computed } from 'vue';
-import { useStore } from '@/stores'
+import { useStore } from '@/stores';
+import LoginDiolague from '@/components/dialogue/LoginDialogue.vue';
+import RegisterDiolague from '@/components/dialogue/RegisterDialogue.vue';
+import ResetDiolague from '@/components/dialogue/ResetDialogue.vue';
 const store = useStore()
 const currentUser = computed(() => store.currentUser)
 
@@ -91,6 +97,11 @@ const messageUnreadStatus = reactive({
   likes: false,
   system: false
 })
+
+// 打开作者的博客
+const openAuthorBlog = () => {
+  window.open('http://flashpipi.com', '_blank')
+}
 </script>
 
 <style scoped>

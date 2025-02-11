@@ -64,6 +64,11 @@
     <div style="display: flex; justify-content: center;">
       <el-pagination background layout="prev, pager, next" :total="1000" />
     </div>
+
+    <!-- 一键滚动到顶的按钮 -->
+    <div class="scroll-to-top" @click="scrollToTop">
+      <el-button type="primary" :icon="ArrowUp" class="scroll-button" style="font-size: 24px;"></el-button>
+    </div>
     
   </div>
 </template>
@@ -71,6 +76,7 @@
 <script setup>
 import { ref } from 'vue'
 import { ElPagination, ElCarousel, ElCarouselItem } from 'element-plus'
+import { ArrowUp } from '@element-plus/icons-vue'
 
 const currentCategory = ref('推荐')
 const categories = ['推荐', '音乐', '游戏', '动画', '科技', '生活', '美食', '体育']
@@ -82,6 +88,10 @@ const carouselItems = ref([
   { id: 4, image: 'https://img.btstu.cn/api/images/5cab0ac9e12f9.jpg' },
   { id: 5, image: 'https://img.btstu.cn/api/images/5cab0ac9e12f9.jpg' }
 ])
+
+const scrollToTop = () => {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
 </script>
 
 <style scoped>
@@ -191,7 +201,7 @@ const carouselItems = ref([
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
 }
 
@@ -207,5 +217,20 @@ const carouselItems = ref([
   text-align: center;
   margin-top: 32px;
   padding-bottom: 24px;
+}
+
+.scroll-to-top {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+}
+
+.scroll-button {
+  background-color: rgba(211, 211, 211, 1); /* 不再透明的浅灰色 */
+  border: 2px solid #c0c0c0; /* 边界颜色稍微深一点的灰色 */
+  border-radius: 8px; /* 圆角 */
+  width: 40px; /* 设置宽度 */
+  height: 40px; /* 设置高度 */
 }
 </style>
