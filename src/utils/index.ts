@@ -23,6 +23,8 @@ export function checkEmail(strEmail: string) {
 
 
 import { notification } from 'ant-design-vue';
+import { ElMessage } from 'element-plus';
+
 // 成功提示
 export function successTips(msg: string) {
     notification["success"]({
@@ -44,4 +46,16 @@ export function warningTips(msg: string, duration = 4500) {
         description: msg,
         duration: duration
     });
+}
+
+export function topSuccessTips(msg: string) {
+    ElMessage.success(msg)
+}
+
+export function topErrorTips(msg: string) {
+    ElMessage.error(msg)
+}
+
+export function topWarningTips(msg: string) {
+    ElMessage.warning(msg)
 }

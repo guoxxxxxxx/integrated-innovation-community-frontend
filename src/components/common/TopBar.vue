@@ -30,11 +30,11 @@
         </div>
       </div>
       <div class="avatar-dropdown">
-        <a-avatar :size="32" style="cursor: pointer" src='/src/assets/default_avatar.png'>
+        <a-avatar :size="32" style="cursor: pointer" :src="store.currentUser?.avatar">
           <template #icon><user-outlined /></template>
         </a-avatar>
-        <div class="avatar-dropdown-content" v-if="currentUser.isLogin">
-          <div class="user-nickname text-center">{{ currentUser?.nickname || '未登录用户' }}</div>
+        <div class="avatar-dropdown-content" v-if="store.isLogin">
+          <div class="user-nickname text-center">{{ store.currentUser?.nickname || '未登录用户' }}</div>
           <div class="user-stats">
             <a-button type="text" class="stat-item">
               <div class="stat-num">{{ currentUser?.followingCount || 0 }}</div>
@@ -52,10 +52,10 @@
           <a-button type="text" block class="dropdown-btn">个人中心</a-button>
           <a-button type="text" block class="dropdown-btn">投稿管理</a-button>
           <div class="divider"></div>
-          <a-button type="text" block class="dropdown-btn logout-btn">退出登录</a-button>
+          <a-button type="text" block class="dropdown-btn logout-btn" @click="logout">退出登录</a-button>
         </div>
 
-        <div class="avatar-dropdown-content" v-if="!currentUser.isLogin">
+        <div class="avatar-dropdown-content" v-if="!store.isLogin">
           <div class="login-prompt text-center">
             <p class="login-message">登录后你可以：</p>
             <div class="login-benefits">
@@ -80,13 +80,15 @@
 <script setup>
 import { Button as AButton, Input, Avatar as AAvatar } from 'ant-design-vue';
 import { UserOutlined } from '@ant-design/icons-vue';
-import { ref, reactive, computed } from 'vue';
+import { reactive, onMounted } from 'vue';
 import { useStore } from '@/stores';
 import LoginDiolague from '@/components/dialogue/LoginDialogue.vue';
 import RegisterDiolague from '@/components/dialogue/RegisterDialogue.vue';
 import ResetDiolague from '@/components/dialogue/ResetDialogue.vue';
+import { queryUserInfoByToken } from '@/api/userRequest';
+import { topSuccessTips } from '@/utils';
+import { ElMessageBox } from 'element-plus';
 const store = useStore()
-const currentUser = computed(() => store.currentUser)
 
 const { Search: AInputSearch } = Input;
 
@@ -102,6 +104,38 @@ const messageUnreadStatus = reactive({
 const openAuthorBlog = () => {
   window.open('http://flashpipi.com', '_blank')
 }
+
+// 查询当前用户的信息
+const getCurrentUserInfo = () => {
+  queryUserInfoByToken(store.currentToken).then(res => {
+    console.log(res.data)
+    store.currentUser = res.data.data
+  })
+}
+
+// 退出登录
+const logout = () => {
+  // 显示确认对话框
+  ElMessageBox.confirm('确定退出吗？', '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(() => {
+    store.currentToken = '';
+    store.isLogin = false;
+    store.currentUser = {};
+    topSuccessTips('退出登录成功');
+  }).catch(() => {
+    // 取消操作
+  });
+}
+
+onMounted(() => {
+  // 如果当前用户已登录，则查询当前用户的信息
+  if (store.isLogin) {
+    getCurrentUserInfo()
+  }
+})
 </script>
 
 <style scoped>

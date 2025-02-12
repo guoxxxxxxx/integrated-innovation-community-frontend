@@ -134,8 +134,15 @@ const countDownText = computed(() => {
 
 // 发送验证码
 const sendVerificationCode = () => {
-  // TODO: 调用发送验证码接口
-  console.log('发送验证码')
+  // 发送验证码
+  sendVerificationCode(form.value.username, 'register').then(res => {
+    if(res.data.status == 200){
+      topSuccessTips('验证码发送成功')
+    }
+    else{
+      topErrorTips(res.data.message)
+    }
+  })
   
   isCountingDown.value = true
   countdown.value = 60
