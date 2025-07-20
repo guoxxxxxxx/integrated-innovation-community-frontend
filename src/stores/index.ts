@@ -1,39 +1,28 @@
-import { defineStore } from 'pinia'
+import { defineStore } from 'pinia';
+import type { UserInfo } from "@/api/entity"
+
 
 export const useStore = defineStore('main', {
   state: () => ({
-    currentUser: {
-      id: '',
-      authUserId: '',
-      nickname: '未命名',
-      avatar: '@/assets/images/default_avatar.png',
-      birthday: '',
-      email: '',
-      gender: '',
-      phone: '',
-      registerTime: '',
-    },
-    isLogin: false,    // 当前用户是否登录
-    currentToken: '', // 当前用户token
-    showLoginBox: false,    // 是否显示登录框
-    showRegisterBox: false, // 是否显示注册框
-    showResetPasswordBox: false, // 是否显示重置密码框
+    currentUser: null as UserInfo | null,
+    token: null as string | null, // 当前用户token
+    remberme: true,     // 是否记住当前用户登录信息
   }),
   actions: {
-    setShowLoginBox(value: boolean) {
-      this.showLoginBox = value
+    setToken(value: string) {
+      this.token = value
     },
-    setShowRegisterBox(value: boolean) {
-      this.showRegisterBox = value
+    // 设置当前登录用户的信息
+    setCurrentUser(value: UserInfo) {
+      this.currentUser = value
     },
-    setShowResetPasswordBox(value: boolean) {
-      this.showResetPasswordBox = value
+    // 登出
+    logout() {
+      this.currentUser = null
+      this.token = null
     },
-    setCurrentToken(value: string) {
-      this.currentToken = value
-    },
-    setIsLogin(value: boolean) {
-      this.isLogin = value
-    }
-  }
+  },
+  persist: {
+    storage: localStorage,
+  },
 }) 

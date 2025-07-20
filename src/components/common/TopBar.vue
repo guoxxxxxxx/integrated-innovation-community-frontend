@@ -102,7 +102,7 @@ const messageUnreadStatus = reactive({
 
 // 打开作者的博客
 const openAuthorBlog = () => {
-  window.open('http://flashpipi.com', '_blank')
+  window.open('http://flashpipi.cn', '_blank')
 }
 
 // 查询当前用户的信息
