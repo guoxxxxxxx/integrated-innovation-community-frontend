@@ -5,6 +5,7 @@
     </div>
     <div class="nav-buttons">
       <a-input-search placeholder="搜索..." style="width: 200px; margin-right: 12px" :allowClear="true" enter-button />
+      <a-button type="text" style="margin-right: -12px" @click="enterDemo">进入demo</a-button>
       <a-button type="text" style="margin-right: -12px">首页</a-button>
       <a-button type="text" style="margin-right: -12px">论坛</a-button>
       <a-button type="text" style="margin-right: -12px" @click="openAuthorBlog">作者的博客</a-button>
@@ -88,6 +89,7 @@ import ResetDiolague from '@/components/dialogue/ResetDialogue.vue';
 import { queryUserInfoByToken } from '@/api/userRequest';
 import { topSuccessTips } from '@/utils';
 import { ElMessageBox } from 'element-plus';
+import router from '@/router';
 const store = useStore()
 
 const { Search: AInputSearch } = Input;
@@ -103,6 +105,11 @@ const messageUnreadStatus = reactive({
 // 打开作者的博客
 const openAuthorBlog = () => {
   window.open('http://flashpipi.cn', '_blank')
+}
+
+// 进入demo界面
+const enterDemo = () => {
+  router.push('/demo')
 }
 
 // 查询当前用户的信息

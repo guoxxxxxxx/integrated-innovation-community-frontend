@@ -45,6 +45,18 @@ const router = createRouter({
           ]
         }
       ]
+    },
+    {
+      path: "/demo",
+      name: "demo",
+      component: () => import("@/views/demo/MainDemoViews.vue"),
+      children: [
+        {
+          path: "/videoUpload",
+          name: "videoUpload",
+          component: () => import("@/views/demo/VideoUploadDemoViews.vue")
+        }
+      ]
     }
   ],
 })
