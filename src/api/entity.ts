@@ -29,13 +29,16 @@ export interface AuthInfo {
 
 // 文件信息上传其他元信息
 export interface FileUploadOtherInfo {
-    mode: string | null,   // 元信息所属模块: video | image | file
+    taskType: string | null,   // 元信息所属模块: video | image | file
     videoMetadata: videoMetadata | null,
 }
 
 // 视频模块的元数据信息
 export interface videoMetadata {
     title: string,
+    description: string,
+    tags: string[],
+    coverUrl: string
 }
 
 // 文件分块上传参数

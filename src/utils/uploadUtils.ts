@@ -2,7 +2,12 @@
 import SparkMD5 from 'spark-md5';
 
 
-// 异步分块计算文件的md5码
+/**
+ * 异步分块计算文件的md5码
+ * @param file 文件
+ * @param chunkSize 块大小 
+ * @returns 文件md5码
+ */
 export const calculateFileMD5Chunked = async (file: File | Blob, chunkSize = 5 * 1024 * 1024): Promise<string> => {
     const spark = new SparkMD5.ArrayBuffer();
     const fileReader = new FileReader();

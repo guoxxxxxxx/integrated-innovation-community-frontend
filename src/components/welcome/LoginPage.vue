@@ -90,6 +90,7 @@ function userLogin() {
             if (resp.data.status == 200) {
               console.log(resp.data.data);              
               store.setCurrentUser(resp.data.data as UserInfo);
+              store.isLogin = true;
               router.push("/home");
             }
           })

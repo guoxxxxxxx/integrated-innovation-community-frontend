@@ -7,6 +7,7 @@ export const useStore = defineStore('main', {
     currentUser: null as UserInfo | null,
     token: null as string | null, // 当前用户token
     remberme: true,     // 是否记住当前用户登录信息
+    isLogin: false,
   }),
   actions: {
     setToken(value: string) {

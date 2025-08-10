@@ -42,6 +42,11 @@ const router = createRouter({
               name: "home",
               component: () => import("@/views/HomeViews.vue")
             },
+            {
+              path: "/postVideo",
+              name: "postVideo",
+              component: () => import("@/components/video/VideoUploadComp.vue")
+            }
           ]
         }
       ]

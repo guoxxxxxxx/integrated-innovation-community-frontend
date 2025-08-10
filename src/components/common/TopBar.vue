@@ -6,6 +6,7 @@
     <div class="nav-buttons">
       <a-input-search placeholder="搜索..." style="width: 200px; margin-right: 12px" :allowClear="true" enter-button />
       <a-button type="text" style="margin-right: -12px" @click="enterDemo">进入demo</a-button>
+      <a-button type="text" class="post-btn" @click="gotoPostVideo"> 我要投稿 </a-button>
       <a-button type="text" style="margin-right: -12px">首页</a-button>
       <a-button type="text" style="margin-right: -12px">论坛</a-button>
       <a-button type="text" style="margin-right: -12px" @click="openAuthorBlog">作者的博客</a-button>
@@ -65,16 +66,13 @@
               <span class="benefit">💬发表评论/点赞</span>
             </div>
             <div class="divider"></div>
-            <a-button type="primary" block class="login-btn" @click="store.setShowLoginBox(true)">立即登录</a-button>
+            <a-button type="primary" block class="login-btn" @click="gotoLogin">立即登录</a-button>
             <div class="divider"></div>
-            <p class="register-prompt">还没有账号？<a href="#" class="register-link" @click="store.setShowRegisterBox(true)">点我注册</a></p>
+            <p class="register-prompt">还没有账号？<a href="#" class="register-link" @click="gotoRegister">点我注册</a></p>
           </div>
         </div>
       </div>
     </div>
-    <LoginDiolague />
-    <RegisterDiolague />
-    <ResetDiolague />
   </div>
 </template>
 
@@ -83,9 +81,6 @@ import { Button as AButton, Input, Avatar as AAvatar } from 'ant-design-vue';
 import { UserOutlined } from '@ant-design/icons-vue';
 import { reactive, onMounted } from 'vue';
 import { useStore } from '@/stores';
-import LoginDiolague from '@/components/dialogue/LoginDialogue.vue';
-import RegisterDiolague from '@/components/dialogue/RegisterDialogue.vue';
-import ResetDiolague from '@/components/dialogue/ResetDialogue.vue';
 import { queryUserInfoByToken } from '@/api/userRequest';
 import { topSuccessTips } from '@/utils';
 import { ElMessageBox } from 'element-plus';
@@ -112,9 +107,24 @@ const enterDemo = () => {
   router.push('/demo')
 }
 
+// 进入登录界面
+const gotoLogin = () => {
+  router.push('/login')
+}
+
+// 进入注册界面
+const gotoRegister = () => {
+  router.push('/register')
+}
+
+// 进入我要投稿界面
+const gotoPostVideo = () => {
+  router.push('/postVideo')
+}
+
 // 查询当前用户的信息
 const getCurrentUserInfo = () => {
-  queryUserInfoByToken(store.currentToken).then(res => {
+  queryUserInfoByToken(store.token).then(res => {
     console.log(res.data)
     store.currentUser = res.data.data
   })
@@ -146,6 +156,23 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.post-btn {
+  margin-right: -12px;
+  background-color: #ff6f91;
+  color: white;
+  border-radius: 6px;
+  padding: 4px 12px;
+}
+
+.post-btn:active {
+  transform: scale(0.96);
+}
+
+::v-deep(.post-btn:hover) {
+  background-color: deeppink !important;
+  color: #ff4d4f !important;
+}
+
 .top-bar {
   width: 100%;
   height: 64px;
