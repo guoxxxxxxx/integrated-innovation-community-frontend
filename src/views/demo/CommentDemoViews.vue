@@ -1,291 +1,285 @@
 <template>
-    <div class="comment-section">
-      <!-- 新评论输入 -->
-      <div class="comment-input">
-        <img class="avatar" :src="userAvatar" alt="用户头像" />
-        <textarea
-          v-model="newComment"
-          placeholder="友善交流，理性发言..."
-          @keydown.enter.prevent="submitComment"
-        ></textarea>
-        <button class="submit-btn" @click="submitComment">发表评论</button>
-      </div>
-  
-      <div class="comment-count">{{ comments.length }} 条评论</div>
-  
-      <!-- 评论列表 -->
-      <div class="comment-list">
-        <CommentItem
-          v-for="comment in comments"
-          :key="comment.id"
-          :comment="comment"
-          @reply="handleReply"
-        />
-      </div>
-    </div>
+    <u-comment :config="config" @submit="submit" @like="like" @reply-page="replyPage">
+      <!-- <template>导航栏卡槽</template> -->
+      <!-- <template #header>头部卡槽</template> -->
+      <!-- <template #action="{ user }">动作卡槽{{ user.username }}</template> -->
+      <!-- <template #avatar="{ id, user }">头像卡槽{{ user.avatar }}</template> -->
+      <!-- <template #info>信息卡槽</template> -->
+      <!-- <template #card>用户信息卡片卡槽</template> -->
+      <!-- <template #func>功能区域卡槽</template> -->
+    </u-comment>
   </template>
   
   <script setup lang="ts">
-  import { ref, defineProps, defineEmits } from 'vue'
+  // 下载表情包资源emoji.zip https://gitee.com/undraw/undraw-ui/releases/tag/v1.0.0
+  // static文件放在public下,引入emoji.ts文件可以移动assets下引入,也可以自定义到指定位置
+  import emoji from "@/assets/static/emoji/emoji"
+  import { reactive, ref } from 'vue'
+  import { UToast, Time, cloneDeep, usePage } from 'undraw-ui'
+  import type { CommentReplyPageApi, CommentSubmitApi, ConfigApi, CommentApi } from 'undraw-ui'
   
-  interface Comment {
-    id: number
-    username: string
-    avatar: string
-    content: string
-    time: string
-    likes: number
-    replies: Comment[]
-  }
+  const config = reactive<ConfigApi>({
+    user: {} as any, // 当前用户信息
+    emoji: emoji, // 表情包数据
+    comments: [], // 评论数据
+    relativeTime: true, // 开启人性化时间
+    page: true // 开启分页
+  })
   
-  const userAvatar = 'https://i.pravatar.cc/40?img=1'
+  // 评论提交事件
+  let temp_id = 100
+  // 提交评论事件
+  const submit = ({ content, parentId, finish }: CommentSubmitApi) => {
+    let str = '提交评论:' + content + ';\t父id: ' + parentId
+    console.log(str)
   
-  const comments = ref<Comment[]>([
-    {
-      id: 1,
-      username: '小明',
-      avatar: 'https://i.pravatar.cc/40?img=2',
-      content: '这个视频太棒了！👍',
-      time: '2 小时前',
-      likes: 5,
-      replies: [
-        {
-          id: 2,
-          username: '阿花',
-          avatar: 'https://i.pravatar.cc/40?img=3',
-          content: '同感，学到了很多！',
-          time: '1 小时前',
-          likes: 1,
-          replies: []
-        }
-      ]
-    }
-  ])
-  
-  const newComment = ref('')
-  
-  // 发布一级评论
-  const submitComment = () => {
-    if (!newComment.value.trim()) return
-    comments.value.unshift({
-      id: Date.now(),
-      username: '我',
-      avatar: userAvatar,
-      content: newComment.value.trim(),
-      time: '刚刚',
+    // 模拟请求接口生成数据
+    const comment: CommentApi = {
+      id: String((temp_id += 1)),
+      parentId: parentId,
+      uid: config.user.id,
+      address: '来自江苏',
+      content: content,
       likes: 0,
-      replies: []
-    })
-    newComment.value = ''
+      createTime: new Date().toString(),
+      user: config.user,
+      reply: null
+    }
+    setTimeout(() => {
+      finish(comment)
+      UToast({ message: '评论成功!', type: 'info' })
+    }, 200)
   }
   
-  // 处理回复
-  const handleReply = (parentId: number, content: string) => {
-    const addReply = (list: Comment[]): boolean => {
-      for (const c of list) {
-        if (c.id === parentId) {
-          c.replies.unshift({
-            id: Date.now(),
-            username: '我',
-            avatar: userAvatar,
-            content,
-            time: '刚刚',
-            likes: 0,
-            replies: []
-          })
-          return true
-        }
-        if (addReply(c.replies)) return true
-      }
-      return false
-    }
-    addReply(comments.value)
+  // 点赞按钮事件
+  const like = (id: string, finish: () => void) => {
+    console.log('点赞: ' + id)
+    // 模拟请求接口成功处理
+    setTimeout(() => {
+      finish()
+    }, 200)
   }
+  
   
   /**
-   * 递归组件 CommentItem
+   * 评论对象数据结构
+   * 存储结构: 一个评论表，通过paretnId是否为空判断类型 评论/回复
+   * 层数: 两层
+   * 第一层：评论 parentId属性为空; 第二层关系: id等于parentId的数据，则为第二层回复的评论数据
+   * 第二层: 回复 parentId属性不为空; 第一层关系: parentId等于第一层id，则为第一层评论的回复数据
+   * 
    */
-  const CommentItem = {
-    props: {
-      comment: {
-        type: Object as () => Comment,
-        required: true
+  // --> 初始化评论列表
+  const comments = [
+    {
+      id: '1',
+      parentId: null,
+      uid: '2',
+      content: '床前明月光，疑是地上霜。<br>举头望明月，低头思故乡。<img class="a" id="a" style="width: 50px" src=a onerror="window.location.href=\'https://baidu.com\'">',
+      createTime: new Time().add(-2, 'hour'),
+      user: {
+        username: '李白 [唐代]',
+        level: 6,
+        avatar: 'https://static.juzicon.com/images/image-231107185110-DFSX.png',
+        homeLink: '/2'
+      },
+      reply: {
+        total: 1,
+        list: [
+          {
+            id: '11',
+            parentId: 1,
+            uid: '1',
+            content: '[狗头][微笑2]',
+            likes: 6666,
+            createTime: new Time().add(-1, 'hour'),
+            user: {
+              username: '杜甫 [唐代]',
+              level: 6,
+              avatar: 'https://static.juzicon.com/images/image-180327173755-IELJ.jpg',
+              homeLink: '/1'
+            }
+          }
+        ]
       }
     },
-    emits: ['reply'],
-    setup(props: any, { emit }: any) {
-      const showReply = ref(false)
-      const replyContent = ref('')
-  
-      const toggleReplyBox = () => {
-        showReply.value = !showReply.value
-      }
-      const submitReply = () => {
-        if (!replyContent.value.trim()) return
-        emit('reply', props.comment.id, replyContent.value.trim())
-        replyContent.value = ''
-        showReply.value = false
-      }
-  
-      return {
-        showReply,
-        replyContent,
-        toggleReplyBox,
-        submitReply
+    {
+      id: '2',
+      parentId: null,
+      uid: '1',
+      content: '国破山河在，城春草木深。<br>感时花溅泪，恨别鸟惊心。<br>烽火连三月，家书抵万金。<br>白头搔更短，浑欲不胜簪。',
+      createTime: new Time().add(-6, 'hour'),
+      user: {
+        username: '杜甫 [唐代]',
+        level: 5,
+        avatar: 'https://static.juzicon.com/images/image-180327173755-IELJ.jpg',
+        homeLink: '/1'
       }
     },
-    template: `
-    <div class="comment-item">
-      <img class="avatar" :src="comment.avatar" alt="头像" />
-      <div class="comment-body">
-        <div class="comment-header">
-          <span class="username">{{ comment.username }}</span>
-          <span class="time">{{ comment.time }}</span>
-        </div>
-        <div class="comment-content">{{ comment.content }}</div>
-        <div class="comment-actions">
-          <span class="action-btn">👍 {{ comment.likes }}</span>
-          <span class="action-btn" @click="toggleReplyBox">回复</span>
-        </div>
+    {
+      id: '3',
+      parentId: null,
+      uid: '2',
+      content: '日照香炉生紫烟，遥看瀑布挂前川。<br>飞流直下三千尺，疑是银河落九天。',
+      likes: 3411,
+      createTime: new Time().add(-12, 'hour'),
+      user: {
+        username: '李白 [唐代]',
+        level: 4,
+        avatar: 'https://static.juzicon.com/images/image-231107185110-DFSX.png',
+        homeLink: '/2'
+      }
+    },
+    {
+      id: '4',
+      parentId: null,
+      uid: '3',
+      content: '明月几时有？把酒问青天。',
+      likes: 3422,
+      createTime: new Time().add(-1, 'day'),
+      user: {
+        username: '苏轼[宋代]',
+        level: 6,
+        avatar: 'https://static.juzicon.com/images/image-180327175138-PCH1.jpg',
+        homeLink: '/3'
+      },
+      reply: {
+        total: 7,
+        list: [
+          {
+            id: '41',
+            parentId: 4,
+            uid: '3',
+            content: '不知天上宫阙，今夕是何年。',
+            likes: 34116,
+            createTime: new Time().add(-23, 'hour'),
+            user: {
+              username: '苏轼[宋代]',
+              level: 6,
+              avatar: 'https://static.juzicon.com/images/image-180327175138-PCH1.jpg',
+              homeLink: '/3'
+            }
+          },
+          {
+            id: '42',
+            parentId: 4,
+            uid: '3',
+            content: '我欲乘风归去，又恐琼楼玉宇，高处不胜寒。',
+            likes: 34116,
+            createTime: new Time().add(-20, 'hour'),
+            user: {
+              username: '苏轼[宋代]',
+              level: 5,
+              avatar: 'https://static.juzicon.com/images/image-180327175138-PCH1.jpg',
+              homeLink: '/3'
+            }
+          },
+          {
+            id: '43',
+            parentId: 4,
+            uid: '3',
+            content: '起舞弄清影，何似在人间。',
+            likes: 34116,
+            createTime: new Time().add(-15, 'hour'),
+            user: {
+              username: '苏轼[宋代]',
+              level: 4,
+              avatar: 'https://static.juzicon.com/images/image-180327175138-PCH1.jpg',
+              homeLink: '/3'
+            }
+          },
+          {
+            id: '44',
+            parentId: 4,
+            uid: '3',
+            content: '转朱阁，低绮户，照无眠。',
+            likes: 34116,
+            createTime: new Time().add(-14, 'hour'),
+            user: {
+              username: '苏轼[宋代]',
+              level: 3,
+              avatar: 'https://static.juzicon.com/images/image-180327175138-PCH1.jpg',
+              homeLink: '/3'
+            }
+          },
+          {
+            id: '45',
+            parentId: 4,
+            uid: '3',
+            content: '不应有恨，何事长向别时圆？',
+            likes: 34116,
+            createTime: new Time().add(-10, 'hour'),
+            user: {
+              username: '苏轼[宋代]',
+              level: 2,
+              avatar: 'https://static.juzicon.com/images/image-180327175138-PCH1.jpg',
+              homeLink: '/3'
+            }
+          },
+          {
+            id: '46',
+            parentId: 4,
+            uid: '3',
+            content: '人有悲欢离合，月有阴晴圆缺，此事古难全。',
+            likes: 34116,
+            createTime: new Time().add(-8, 'hour'),
+            user: {
+              username: '苏轼[宋代]',
+              avatar: 'https://static.juzicon.com/images/image-180327175138-PCH1.jpg',
+              homeLink: '/3'
+            }
+          },
+          {
+            id: '47',
+            parentId: 4,
+            uid: '3',
+            content: '但愿人长久，千里共婵娟。',
+            likes: 34116,
+            createTime: new Time().add(-4, 'hour'),
+            user: {
+              username: '苏轼[宋代]',
+              avatar: 'https://static.juzicon.com/images/image-180327175138-PCH1.jpg',
+              homeLink: '/3'
+            }
+          }
+        ]
+      }
+    }
+  ] as CommentApi[]
   
-        <div v-if="showReply" class="reply-box">
-          <textarea v-model="replyContent" placeholder="写下你的回复..."></textarea>
-          <button class="submit-btn" @click="submitReply">发送</button>
-        </div>
+  // 模拟请求接口获取评论数据
+  setTimeout(() => {
+    // 当前登录用户数据
+    config.user = {
+      id: 1,
+      username: '杜甫 [唐代]',
+      level: 6,
+      avatar: 'https://static.juzicon.com/images/image-180327173755-IELJ.jpg',
+      // 评论id数组 建议:存储方式用户id和文章id和评论id组成关系,根据用户id和文章id来获取对应点赞评论id,然后加入到数组中返回
+      likeIds: [1, 2, 3]
+    } as any
+    config.comments = comments
+  }, 500)
   
-        <div class="replies" v-if="comment.replies.length > 0">
-          <CommentItem
-            v-for="child in comment.replies"
-            :key="child.id"
-            :comment="child"
-            @reply="$emit('reply', $event[0], $event[1])"
-          />
-        </div>
-      </div>
-    </div>
-    `
+  // 模拟请求接口分页 请求覆盖评论对应的回复数据(全量覆盖回复数据)
+  let reply = cloneDeep(comments[3].reply)
+  //回复分页
+  const replyPage = ({ parentId, current, size, finish }: CommentReplyPageApi) => {
+    console.log(current, size)
+    // 根据 parentId查询后端分页回复列表返回并覆盖回复
+    if (reply) {
+      let tmp = {
+        total: reply?.total,
+        // 分页提取回复
+        list: usePage(current, size, reply.list)
+      }
+      setTimeout(() => {
+        finish(tmp)
+      }, 200)
+    }
   }
+  // <-
   </script>
   
-  <style scoped>
-  .comment-section {
-    background: #fff;
-    border-radius: 8px;
-    padding: 16px;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-      "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji",
-      "Segoe UI Emoji";
-    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
-  }
-  .comment-input {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 16px;
-  }
-  .avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    object-fit: cover;
-  }
-  textarea {
-    flex: 1;
-    min-height: 60px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 8px;
-    font-size: 14px;
-    resize: vertical;
-    transition: border-color 0.3s;
-  }
-  textarea:focus {
-    outline: none;
-    border-color: #00a1d6;
-  }
-  .submit-btn {
-    padding: 6px 14px;
-    background: #00a1d6;
-    border: none;
-    color: white;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 600;
-    user-select: none;
-    transition: background-color 0.3s;
-  }
-  .submit-btn:hover {
-    background: #008bbd;
-  }
-  .comment-count {
-    font-size: 14px;
-    color: #666;
-    margin-bottom: 12px;
-  }
-  .comment-item {
-    display: flex;
-    gap: 12px;
-    padding: 12px 0;
-    border-bottom: 1px solid #f0f0f0;
-  }
-  .comment-body {
-    flex: 1;
-  }
-  .comment-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 14px;
-  }
-  .username {
-    font-weight: 600;
-    color: #333;
-  }
-  .time {
-    color: #999;
-    font-size: 12px;
-  }
-  .comment-content {
-    margin: 8px 0;
-    font-size: 15px;
-    line-height: 1.5;
-    color: #444;
-    white-space: pre-wrap;
-  }
-  .comment-actions {
-    display: flex;
-    gap: 24px;
-    font-size: 13px;
-    color: #666;
-  }
-  .action-btn {
-    cursor: pointer;
-    user-select: none;
-    transition: color 0.3s;
-  }
-  .action-btn:hover {
-    color: #00a1d6;
-  }
-  .reply-box {
-    margin-top: 8px;
-  }
-  .reply-box textarea {
-    width: 100%;
-    min-height: 50px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 6px 8px;
-    font-size: 14px;
-    resize: vertical;
-    transition: border-color 0.3s;
-  }
-  .reply-box textarea:focus {
-    outline: none;
-    border-color: #00a1d6;
-  }
-  .replies {
-    margin-left: 48px;
-    margin-top: 12px;
-    border-left: 2px solid #f0f0f0;
-    padding-left: 12px;
-  }
-  </style>
+  <style lang="scss" scoped></style>
+  
