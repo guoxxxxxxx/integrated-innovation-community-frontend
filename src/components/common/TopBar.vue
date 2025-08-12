@@ -1,6 +1,6 @@
 <template>
   <div class="top-bar">
-    <div class="logo">
+    <div class="logo" @click="router.push('/home')">
       <h1>融合创新社区</h1>
     </div>
     <div class="nav-buttons">
@@ -187,6 +187,7 @@ onMounted(() => {
 .logo {
   display: flex;
   align-items: center;
+  cursor: pointer;
 }
 
 .logo h1 {

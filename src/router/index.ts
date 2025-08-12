@@ -33,6 +33,10 @@ const router = createRouter({
       component: () => import("@/App.vue"),
       children: [
         {
+          path: "",
+          redirect: "/home"
+        },
+        {
           path: "/main",
           name: "main",
           component: () => import("@/views/MainViews.vue"),
@@ -46,6 +50,11 @@ const router = createRouter({
               path: "/postVideo",
               name: "postVideo",
               component: () => import("@/components/video/VideoUploadComp.vue")
+            },
+            {
+              path: "/videoPlayer",
+              name: "videoPlayer",
+              component: () => import("@/components/video/VideoPlayerComp.vue")
             }
           ]
         }
@@ -60,6 +69,11 @@ const router = createRouter({
           path: "/videoUpload",
           name: "videoUpload",
           component: () => import("@/views/demo/VideoUploadDemoViews.vue")
+        },
+        {
+          path: "/commentDemo",
+          name: "commentDemo",
+          component: () => import("@/views/demo/CommentDemoViews.vue")  
         }
       ]
     }

@@ -1,5 +1,8 @@
-// const baseUrl = "http://8.147.220.43:31000/api/iic/v1"
-const baseUrl = "http://192.168.2.4:11000/api/iic/v1"
+// export const baseUrl = "http://8.147.220.43:31000/api/iic/v1"
+export const baseUrl = "http://192.168.2.4:11000/api/iic/v1"
+
+export const videoPlayerUrl = baseUrl + "/videos"
+export const graphUrl = baseUrl + "/graphs"
 
 import { errTips, topErrorTips } from "@/utils";
 // 请求加载动画

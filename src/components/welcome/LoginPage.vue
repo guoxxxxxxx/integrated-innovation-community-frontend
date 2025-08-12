@@ -83,12 +83,9 @@ function userLogin() {
           store.setToken(resp.data.data.token);
           ElMessage.success(`登录成功`);
           store.remberme = form.remember;
-          // 登录成功后查询用户信息并保存至store中
-          console.log(resp.data.data);
           
           parseUserInfoByToken(resp.data.data.token).then((resp) => {
-            if (resp.data.status == 200) {
-              console.log(resp.data.data);              
+            if (resp.data.status == 200) {   
               store.setCurrentUser(resp.data.data as UserInfo);
               store.isLogin = true;
               router.push("/home");

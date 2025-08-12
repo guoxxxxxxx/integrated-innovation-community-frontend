@@ -28,16 +28,16 @@
 
       <!-- 右侧视频列表 -->
       <div class="video-grid" style="width: 45%;">
-        <div class="video-card" v-for="i in 4" :key="i" style="width: 100%; margin-bottom: 20px;">
+        <div class="video-card" v-for="i in videoList.slice(0, 4)" :key="i.id" style="width: 100%; margin-bottom: 20px;" @click="playVideo(i.id)">
           <div class="video-thumbnail">
-            <img src="/src/assets/default_avatar.png" alt="视频缩略图">
-            <span class="duration">12:34</span>
+            <img :src="imageBaseUrl + i.coverName" alt="视频缩略图">
+            <span class="duration">{{ formatDuration(i.duration) }}</span>
           </div>
           <div class="video-info">
-            <h3 class="video-title">示例视频标题{{ i }}</h3>
-            <div class="video-meta">
+            <h3 class="video-title">{{ i.title }}</h3>
+            <div class="video-meta" style="width: 100%; display: flex; justify-content: space-between;">
               <span class="author">作者名称</span>
-              <span class="views">1.2万次观看</span>
+              <span class="views">播放量: {{ i.viewCount }}</span>
             </div>
           </div>
         </div>
@@ -46,16 +46,16 @@
 
     <!-- 视频列表 -->
     <div class="video-grid">
-      <div class="video-card" v-for="i in 12" :key="i">
+      <div class="video-card" v-for="i in videoList.slice(0, 4)" :key="i.id">
         <div class="video-thumbnail">
-          <img src="/src/assets/default_avatar.png" alt="视频缩略图">
-          <span class="duration">12:34</span>
+          <img :src="imageBaseUrl + i.coverName" alt="视频缩略图">
+          <span class="duration">{{ formatDuration(i.duration) }}</span>
         </div>
         <div class="video-info">
-          <h3 class="video-title">示例视频标题{{ i }}</h3>
+          <h3 class="video-title">{{ i.title }}</h3>
           <div class="video-meta">
             <span class="author">作者名称</span>
-            <span class="views">1.2万次观看</span>
+            <span class="views">播放量: {{ i.viewCount }}</span>
           </div>
         </div>
       </div>
@@ -73,13 +73,55 @@
   </div>
 </template>
 
-<script setup>
-import { ref } from 'vue'
+<script setup lang="ts">
+import { onMounted, ref } from 'vue'
 import { ElPagination, ElCarousel, ElCarouselItem } from 'element-plus'
 import { ArrowUp } from '@element-plus/icons-vue'
+import type { VideoInfo } from '@/api/entity';
+import { getPage } from '@/api/videoApi'
+import type { QueryCondition } from '@/api/videoApi'
+import { imageBaseUrl } from '@/api/graphApi'
+import router from '@/router';
 
 const currentCategory = ref('推荐')
 const categories = ['推荐', '音乐', '游戏', '动画', '科技', '生活', '美食', '体育']
+
+// 视频列表
+const videoList = ref<VideoInfo[]>([])
+
+// 视频列表查询条件
+const queryCondition = ref<QueryCondition>({
+  pageNo: 1,
+  pageSize: 16,
+})
+// 向后端服务器请求视频列表
+const getVideoList = () => {
+  getPage(queryCondition.value).then(resp => {
+    if(resp.data.status == 200){
+      videoList.value = resp.data.data.data
+      console.log(videoList.value)
+    }
+  })
+}
+
+// 计算属性，将秒转化为HH:mm:ss的的格式
+const formatDuration = (duration: string) => {
+  const seconds = parseInt(duration)
+  const hours = Math.floor(seconds / 3600)
+  const minutes = Math.floor((seconds - hours * 3600) / 60)
+  const remainingSeconds = seconds - hours * 3600 - minutes * 60
+  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`
+}
+
+// 进入播放界面
+const playVideo = (videoId: number) => {
+  router.push({ path: '/videoPlayer', query: { videoId: videoId } })
+}
+
+// 进入界面加载数据
+onMounted(() => {
+  getVideoList()
+})
 
 const carouselItems = ref([
   { id: 1, image: 'https://img.btstu.cn/api/images/5cab0ac9e12f9.jpg' },

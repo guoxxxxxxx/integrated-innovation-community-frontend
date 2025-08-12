@@ -49,3 +49,22 @@ export interface FileUploadMultiBlockParams {
     chunkMd5: string,
     file: Blob | File,
 }
+
+/**
+ * 视频信息对象
+ */
+export interface VideoInfo {
+    id: number,
+    title: string,
+    description: string,
+    coverUrl: string,
+    duration: string,
+    fileId: number,
+    modifyTime: string,
+    resolution: string,
+    tags: string[],
+    uploadTime: string,
+    userId: number,
+    viewCount: number,
+    coverName: string,
+}

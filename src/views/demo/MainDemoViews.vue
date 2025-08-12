@@ -13,6 +13,10 @@
         <!-- 导航栏 -->
         <div style="display: flex; justify-content: center; margin-top: 30px;">
             <router-link to="/videoUpload">视频上传</router-link>
+            <span>｜｜</span>
+            <router-link to="/videoPlayer">视频播放</router-link>
+            <span>｜｜</span>
+            <router-link to="/commentDemo">评论demo</router-link>
         </div>
         <!-- 主体 -->
         <router-view></router-view>

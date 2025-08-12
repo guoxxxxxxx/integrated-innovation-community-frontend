@@ -166,8 +166,6 @@ async function startUpload() {
             if (resp.data.data == true) {
                 achieveCount++;
                 progress.value = achieveCount / chunkCount * 99;
-                console.log(progress.value);
-
             }
         })
     }
