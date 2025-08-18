@@ -8,6 +8,8 @@ import { errTips, topErrorTips } from "@/utils";
 // 请求加载动画
 import axios from "axios";
 import { useStore } from "@/stores"
+import router from "@/router";
+import { ElMessage } from "element-plus";
 
 const request = axios.create({
     baseURL: baseUrl,
@@ -30,6 +32,10 @@ request.interceptors.request.use((config) => {
 request.interceptors.response.use(response => {
     if (response.data.status == 5500) {
         topErrorTips(response.data.message)
+    }
+    else if (response.data.status == 1503) {
+        ElMessage.error(response.data.message)
+        router.push('/login')
     }
     return response;
 }, error => {
