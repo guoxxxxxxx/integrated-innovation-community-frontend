@@ -49,20 +49,20 @@
                         </el-col>
 
                         <el-col :span="24">
-                            <el-form-item label="邮箱" prop="email">
-                                <el-input v-model="form.email" placeholder="请输入您的邮箱" size="large" clearable />
+                            <el-form-item label="手机号" prop="phone">
+                                <el-input v-model="form.phone" placeholder="请输入您的手机号" size="large" clearable />
                             </el-form-item>
                         </el-col>
 
                         <el-col :span="24">
-                            <el-form-item label="手机号" prop="phone">
-                                <el-input v-model="form.phone" placeholder="请输入您的手机号" size="large" clearable />
+                            <el-form-item label="邮箱" prop="email">
+                                <el-input v-model="form.email" placeholder="请输入您的邮箱" size="large" clearable disabled />
                             </el-form-item>
                         </el-col>
                     </el-row>
 
                     <div class="form-actions">
-                        <el-button @click="handleCancel" size="large">取消</el-button>
+                        <el-button @click="handleCancel" size="large">返回</el-button>
                         <el-button type="primary" @click="handleSubmit" size="large" :loading="submitting">
                             保存信息
                         </el-button>
@@ -81,6 +81,8 @@ import type { FormInstance } from 'element-plus';
 import HeaderCoverComp from "../common/HeaderCoverComp.vue";
 
 import { useStore } from "@/stores";
+import { updateUserInfoById } from "@/api/userRequest";
+import router from "@/router";
 
 const pinia = useStore();
 
@@ -100,14 +102,6 @@ const rules = {
     nickname: [
         { required: true, message: "请输入昵称", trigger: "blur" },
         { min: 2, max: 20, message: "昵称长度应在 2-20 个字符之间", trigger: "blur" }
-    ],
-    email: [
-        { required: true, message: "请输入邮箱地址", trigger: "blur" },
-        { type: "email", message: "请输入正确的邮箱地址", trigger: "blur" }
-    ],
-    phone: [
-        { required: true, message: "请输入手机号", trigger: "blur" },
-        { pattern: /^1[3-9]\d{9}$/, message: "请输入正确的手机号", trigger: "blur" }
     ]
 };
 
@@ -122,20 +116,13 @@ const handleAvatarSuccess = (response: any) => {
 
 const handleSubmit = async () => {
     if (!formRef.value) return;
-
-    try {
-        await formRef.value.validate();
-        submitting.value = true;
-
-        // 模拟API调用
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-        ElMessage.success("个人信息更新成功");
-        submitting.value = false;
-    } catch (error) {
-        submitting.value = false;
-        ElMessage.error("请检查表单信息");
-    }
+    updateUserInfoById(pinia.currentUser?.id, form.nickname, form.avatar, form.gender, form.birthday, form.phone)
+    .then((resp) => { 
+        if (resp.data.status == 200) {
+            ElMessage.success(`更新成功`)
+            pinia.currentUser = resp.data.data;
+        }
+    })
 };
 
 const handleCancel = () => {
@@ -148,11 +135,7 @@ const handleCancel = () => {
             type: 'warning',
         }
     ).then(() => {
-        // 重置表单
-        if (formRef.value) {
-            formRef.value.resetFields();
-        }
-        ElMessage.info('已取消编辑');
+        router.push("/home")
     }).catch(() => {
         // 用户点击了取消按钮
     });
@@ -177,6 +160,8 @@ const handleCancel = () => {
 }
 
 .user-card {
+    margin-top: 90px;
+    max-height: 700px;
     width: 100%;
     max-width: 800px;
     border-radius: 12px;
