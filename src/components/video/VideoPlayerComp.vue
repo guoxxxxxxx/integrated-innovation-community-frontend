@@ -1,33 +1,16 @@
 <template>
   <div class="container" style="width: 100%;">
     <div class="video-container">
-      <div
-        class="video-wrapper"
-        @mouseenter="showControls = true"
-        @mouseleave="showControls = false"
-      >
-        <video
-          ref="videoPlayer"
-          class="video-js vjs-default-skin"
-          controls
-          preload="auto"
-          width="1200"
-          height="675"
-        ></video>
+      <div class="video-wrapper" @mouseenter="showControls = true" @mouseleave="showControls = false">
+        <video ref="videoPlayer" class="video-js vjs-default-skin" controls preload="auto" width="1200"
+          height="675"></video>
 
         <!-- 右下角控制面板 -->
         <div class="custom-controls" :class="{ show: showControls }">
           <!-- 分辨率切换 -->
           <div class="control-item">
-            <select
-              v-model="currentResolution"
-              @change="changeResolution(currentResolution)"
-            >
-              <option
-                v-for="(path, key) in resolutionPath"
-                :key="key"
-                :value="key"
-              >
+            <select v-model="currentResolution" @change="changeResolution(currentResolution)">
+              <option v-for="(path, key) in resolutionPath" :key="key" :value="key">
                 {{ key }}
               </option>
             </select>
@@ -35,10 +18,7 @@
 
           <!-- 倍速切换 -->
           <div class="control-item">
-            <select
-              v-model="currentSpeed"
-              @change="changePlaybackRate(currentSpeed)"
-            >
+            <select v-model="currentSpeed" @change="changePlaybackRate(currentSpeed)">
               <option v-for="rate in speedOptions" :key="rate" :value="rate">
                 {{ rate }}x
               </option>
@@ -48,16 +28,17 @@
       </div>
     </div>
 
-    <div class="comment-container" style="width: 100%;">
+    <div class="comment-container" style="width: 100%; text-align: center;">
       <div class="inner-container" style="width: 40%; margin: 0 auto;">
-        <u-comment
-          :config="config"
-          @submit="submit"
-          @reply-page="replyPage"
-        >
+        <u-comment :config="config" @submit="submit" @reply-page="replyPage">
         </u-comment>
       </div>
+      <div style="display: flex; width: 100%; justify-content: center; margin-top: 20px;">
+        <el-pagination background layout="prev, pager, next" :total="commentTotal" :current-page="commentPageNo"
+          :current-size="commentPageSize" @current-change="changeCommentPage" />
+      </div>
     </div>
+
   </div>
 </template>
 
@@ -92,11 +73,20 @@ const currentVideoId = route.query.videoId;
 
 const showControls = ref(false);
 
+// 当前视频评论总数
+const commentTotal = ref(0);
+const commentPageSize = ref(10);
+const commentPageNo = ref(1);
+
+const changeCommentPage = (pageNo: number) => {
+  commentPageNo.value = pageNo;
+  getCommentList(currentVideoId, pageNo, commentPageSize.value)
+}
+
 /**
  * 评论功能开始位置
  */
 import emoji from "@/assets/static/emoji/emoji";
-import { UToast } from "undraw-ui";
 import type {
   CommentReplyPageApi,
   CommentSubmitApi,
@@ -108,6 +98,7 @@ import {
   getVideoCommentPageList,
   sendVideoComment,
   sendVideoReply,
+  getVideoReplyPageList
 } from "@/api/commentApi";
 
 // 配置项
@@ -121,6 +112,11 @@ const config = reactive<ConfigApi>({
   comments: [], // 评论数据
   relativeTime: true, // 开启人性化时间
   page: true, // 开启分页
+  show: {
+    likes: false,
+    level: false,
+    address: true
+  },
 });
 
 // 提交评论事件
@@ -174,6 +170,7 @@ const getCommentList = (
     if (resp.data.status === 200) {
       const rawList = resp.data.data.data || [];
       config.comments = rawList;
+      commentTotal.value = resp.data.data.total;
     }
   });
 };
@@ -188,12 +185,14 @@ const like = (id: string, finish: () => void) => {
 
 // 回复分页
 const replyPage = ({ parentId, current, size, finish }: CommentReplyPageApi) => {
-  console.log("分页加载回复 parentId:", parentId);
-  // TODO 可以请求后端接口加载分页回复
-  finish({
-    total: 0,
-    list: [],
-  });
+  getVideoReplyPageList(parentId, current, size).then((resp) => {
+    if(resp.data.status == 200){
+      finish({
+        total: resp.data.data.total,
+        list: resp.data.data.list
+      })
+    }
+  })
 };
 
 /**
@@ -215,7 +214,7 @@ const updateSource = (src: string) => {
   player.one("loadedmetadata", () => {
     try {
       player.currentTime(currentTime);
-    } catch {}
+    } catch { }
     if (wasPlaying) {
       setTimeout(() => {
         player.play();

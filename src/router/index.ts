@@ -55,6 +55,11 @@ const router = createRouter({
               path: "/videoPlayer",
               name: "videoPlayer",
               component: () => import("@/components/video/VideoPlayerComp.vue")
+            },
+            {
+              path: "/userInfo",
+              name: "userInfo",
+              component: () => import("@/components/user/UserInfoComp.vue")
             }
           ]
         }

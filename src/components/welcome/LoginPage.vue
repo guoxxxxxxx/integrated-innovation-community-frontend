@@ -63,7 +63,7 @@ const formRef = ref()
 const form = reactive({
   username: '',
   password: '',
-  remember: true
+  remember: false
 })
 
 const rules = {
@@ -100,13 +100,16 @@ function userLogin() {
 onMounted(() => {
   if(store.remberme){
     // 验证用户token是否有效
-    if (store.token) {
+    if (store.token && store.isLogin && store.remberme) {
       parseUserInfoByToken(store.token).then((resp) => {
         if (resp.data.status == 200) {
           store.setCurrentUser(resp.data.data as UserInfo);
           router.push("/home"); // TODO 这里需要修改
         }
       })
+    }
+    else {
+      store.logout();
     }
   }
 });

@@ -51,7 +51,7 @@
               <div class="stat-label">动态</div>
             </a-button>
           </div>
-          <a-button type="text" block class="dropdown-btn">个人中心</a-button>
+          <a-button type="text" block class="dropdown-btn" @click="router.push('/userInfo')">个人中心</a-button>
           <a-button type="text" block class="dropdown-btn">投稿管理</a-button>
           <div class="divider"></div>
           <a-button type="text" block class="dropdown-btn logout-btn" @click="logout">退出登录</a-button>

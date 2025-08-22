@@ -21,6 +21,7 @@ export const useStore = defineStore('main', {
     logout() {
       this.currentUser = null
       this.token = null
+      this.isLogin = false
     },
   },
   persist: {

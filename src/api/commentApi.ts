@@ -56,3 +56,15 @@ export const getVideoCommentPageList = (videoId: any, pageNo: number, pageSize: 
         }
     })
 }
+
+
+/**
+ * 分页获取回复列表
+ * @param parentId 父id
+ * @param pageNo 页码
+ * @param pageSize 页面大小
+ * @returns 结果
+ */
+export const getVideoReplyPageList = (parentId: any, pageNo: number, pageSize: number) => {
+    return request.get(`/comment/videoReply/getPageFormat/${parentId}/${pageNo}/${pageSize}`)
+}
