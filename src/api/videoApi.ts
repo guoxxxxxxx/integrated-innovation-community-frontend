@@ -28,6 +28,57 @@ export const getPage = (condition: QueryCondition) => {
 }
 
 
-export const getVideoById = (id: number) => {
+export const getVideoById = (id: any) => {
     return request.get(`/video/video/${id}`)
+}
+
+
+/**
+ * 给视频点赞
+ * @param videoId 视频id
+ * @returns 点赞状态信息
+ */
+export const likeVideo = (videoId: any) => {
+    return request.post(`/video/videoLikes/likes/${videoId}`)
+}
+
+
+/**
+ * 给视频取消点赞
+ * @param videoId 视频id
+ * @returns 
+ */
+export const cancelLikeVideo = (videoId: any) => {
+    return request.post(`/video/videoLikes/cancelLikes/${videoId}`)
+}
+
+
+/**
+ * 给视频点收藏
+ * @param videoId 视频id
+ * @returns 
+ */
+export const favorVideo = (videoId: any) => {
+    return request.post(`/video/videoLikes/favor/${videoId}`)
+}
+
+
+/**
+ * 取消给视频点收藏
+ * @param videoId 视频id
+ * @returns 
+ */
+export const cancelFavorVideo = (videoId: any) => {
+    return request.post(`/video/videoLikes/cancelFavor/${videoId}`)
+}
+
+
+/**
+ * 获取用户视频的点赞收藏状态
+ * @param videoId 视频id
+ * @param userId 用户id
+ * @returns 
+ */
+export const getVideoLikeAndFavorStatus = (videoId: any, userId: any) => {
+    return request.get(`/video/videoLikes/${videoId}/${userId}`)
 }

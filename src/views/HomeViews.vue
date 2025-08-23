@@ -3,14 +3,8 @@
     <!-- 视频分类导航 -->
     <div class="category-nav-wrapper">
       <div class="category-nav">
-        <a-button 
-          v-for="category in categories" 
-          :key="category"
-          type="text"
-          class="category-btn"
-          :class="{ active: currentCategory === category }"
-          @click="currentCategory = category"
-        >
+        <a-button v-for="category in categories" :key="category" type="text" class="category-btn"
+          :class="{ active: currentCategory === category }" @click="currentCategory = category">
           {{ category }}
         </a-button>
       </div>
@@ -18,7 +12,8 @@
 
     <div style="display: flex; justify-content: space-between; height: 450px;">
       <!-- 左侧轮播图 -->
-      <div style="display: flex; justify-content: center; align-items: center; width: 50%; height: 100%; margin-top: 40px;">
+      <div
+        style="display: flex; justify-content: center; align-items: center; width: 50%; height: 100%; margin-top: 40px;">
         <el-carousel :interval="4000" arrow="always" style="width: 100%; height: 400px;">
           <el-carousel-item v-for="item in carouselItems" :key="item.id">
             <img :src="item.image" alt="轮播图" style="width: 100%; height: 100%; border-radius: 8px; object-fit: cover;">
@@ -28,15 +23,18 @@
 
       <!-- 右侧视频列表 -->
       <div class="video-grid" style="width: 45%;">
-        <div class="video-card" v-for="i in videoList.slice(0, 4)" :key="i.id" style="width: 100%; margin-bottom: 20px;" @click="playVideo(i.id)">
-          <div class="video-thumbnail">
+        <div class="video-card" v-for="i in videoList.slice(0, 4)" :key="i.id" style="width: 100%; margin-bottom: 20px;">
+          <div class="video-thumbnail" @click="playVideo(i.id)">
             <img :src="imageBaseUrl + i.coverName" alt="视频缩略图">
             <span class="duration">{{ formatDuration(i.duration) }}</span>
           </div>
           <div class="video-info">
-            <h3 class="video-title">{{ i.title }}</h3>
+            <h3 class="video-title" @click="playVideo(i.id)">{{ i.title }}</h3>
             <div class="video-meta" style="width: 100%; display: flex; justify-content: space-between;">
-              <span class="author">作者名称</span>
+              <div style="display: flex; align-items: center;">
+                <el-avatar size="small" :src="i.user.avatar" />
+                <span class="author">{{ i.user.nickname }}</span>
+              </div>
               <span class="views">播放量: {{ i.viewCount }}</span>
             </div>
           </div>
@@ -45,7 +43,7 @@
     </div>
 
     <!-- 视频列表 -->
-    <div class="video-grid">
+    <div class="video-grid" style="margin-top: 90px;">
       <div class="video-card" v-for="i in videoList.slice(0, 4)" :key="i.id">
         <div class="video-thumbnail">
           <img :src="imageBaseUrl + i.coverName" alt="视频缩略图">
@@ -69,7 +67,7 @@
     <div class="scroll-to-top" @click="scrollToTop">
       <el-button type="primary" :icon="ArrowUp" class="scroll-button" style="font-size: 24px;"></el-button>
     </div>
-    
+
   </div>
 </template>
 
@@ -97,7 +95,7 @@ const queryCondition = ref<QueryCondition>({
 // 向后端服务器请求视频列表
 const getVideoList = () => {
   getPage(queryCondition.value).then(resp => {
-    if(resp.data.status == 200){
+    if (resp.data.status == 200) {
       videoList.value = resp.data.data.data
       console.log(videoList.value)
     }
@@ -139,12 +137,14 @@ const scrollToTop = () => {
 <style scoped>
 .home-container {
   max-width: 1200px;
-  margin: 0 auto 0; /* 为顶部导航栏留出空间 */
+  margin: 0 auto 0;
+  /* 为顶部导航栏留出空间 */
   padding: 20px;
 }
 
 .category-nav-wrapper {
-  top: 90px; /* 顶部导航栏的高度 */
+  top: 90px;
+  /* 顶部导航栏的高度 */
   left: 0;
   right: 0;
   z-index: 100;
@@ -193,7 +193,8 @@ const scrollToTop = () => {
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
   gap: 20px;
   margin-bottom: 32px;
-  margin-top: 20px; /* 为固定定位的导航栏留出空间 */
+  margin-top: 20px;
+  /* 为固定定位的导航栏留出空间 */
 }
 
 .video-card {
@@ -240,11 +241,13 @@ const scrollToTop = () => {
   margin: 0;
   font-size: 14px;
   line-height: 1.4;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
+
+  display: -webkit-box;            /* Flex-like的伸缩盒子 */
+  -webkit-box-orient: vertical;    /* 垂直排列 */
+  -webkit-line-clamp: 2;           /* 限制最多两行 */
+  overflow: hidden;                /* 超出隐藏 */
+  text-overflow: ellipsis;         /* 多余显示省略号 */
+  word-break: break-word;          /* 避免长单词撑破 */
 }
 
 .video-meta {
@@ -269,10 +272,15 @@ const scrollToTop = () => {
 }
 
 .scroll-button {
-  background-color: rgba(211, 211, 211, 1); /* 不再透明的浅灰色 */
-  border: 2px solid #c0c0c0; /* 边界颜色稍微深一点的灰色 */
-  border-radius: 8px; /* 圆角 */
-  width: 40px; /* 设置宽度 */
-  height: 40px; /* 设置高度 */
+  background-color: rgba(211, 211, 211, 1);
+  /* 不再透明的浅灰色 */
+  border: 2px solid #c0c0c0;
+  /* 边界颜色稍微深一点的灰色 */
+  border-radius: 8px;
+  /* 圆角 */
+  width: 40px;
+  /* 设置宽度 */
+  height: 40px;
+  /* 设置高度 */
 }
 </style>

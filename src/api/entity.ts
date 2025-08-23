@@ -67,4 +67,7 @@ export interface VideoInfo {
     userId: number,
     viewCount: number,
     coverName: string,
+    user: any,
+    likes: number,
+    favorite: number
 }

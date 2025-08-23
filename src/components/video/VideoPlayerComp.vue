@@ -26,9 +26,107 @@
           </div>
         </div>
       </div>
+
+
+      <div class="details-container"
+        style="margin-top: 20px; padding: 16px; border-radius: 8px; background: #f9f9f9; box-shadow: 0 2px 6px rgba(0,0,0,0.1); max-width: 1200px; margin-left: auto; margin-right: auto;">
+
+        <div class="video-star-container" style="display: flex; justify-content: space-around; margin-bottom: 16px;">
+
+          <!-- 播放量 -->
+          <div class="show-count" style="display: flex; align-items: center;">
+            <el-icon style="color: #409EFF; margin-right: 6px; font-size: 20px;">
+              <View />
+            </el-icon>
+            <span style="font-size: 0.95em; color: #606266;">播放量: {{ currentVideoInfo?.viewCount }}</span>
+          </div>
+
+          <!-- 点赞数 -->
+          <div class="likes-container" v-if="status.likes" @click="cancelLikeBtnClick"
+            style="display: flex; align-items: center; cursor: pointer; transition: transform 0.2s;"
+            @mouseenter="hoverEnter($event)" @mouseleave="hoverLeave($event)">
+            <el-icon style="color: #F56C6C; margin-right: 6px; font-size: 20px;">
+              <CaretTop />
+            </el-icon>
+            <span style="font-size: 0.95em; color: #606266;">点赞数: {{ currentVideoInfo?.likes }}</span>
+          </div>
+
+          <div class="likes-container" v-if="!status.likes" @click="likeBtnClick"
+            style="display: flex; align-items: center; cursor: pointer; transition: transform 0.2s;"
+            @mouseenter="hoverEnter($event)" @mouseleave="hoverLeave($event)">
+            <el-icon style="color: gray; margin-right: 6px; font-size: 20px;">
+              <CaretTop />
+            </el-icon>
+            <span style="font-size: 0.95em; color: #606266;">点赞数: {{ currentVideoInfo?.likes }}</span>
+          </div>
+
+
+          <!-- 收藏数 -->
+          <div class="star-container" v-if="!status.favor" @click="favorBtnClick"
+            style="display: flex; align-items: center; cursor: pointer; transition: transform 0.2s;"
+            @mouseenter="hoverEnter($event)" @mouseleave="hoverLeave($event)">
+            <el-icon style="color: #E6A23C; margin-right: 6px; font-size: 20px;">
+              <Star />
+            </el-icon>
+            <span style="font-size: 0.95em; color: #606266;">收藏数: {{ currentVideoInfo?.favorite }}</span>
+          </div>
+
+          <div class="star-container" v-if="status.favor" @click="cancelFavorBtnClick"
+            style="display: flex; align-items: center; cursor: pointer; transition: transform 0.2s;"
+            @mouseenter="hoverEnter($event)" @mouseleave="hoverLeave($event)">
+            <el-icon style="color: #E6A23C; margin-right: 6px; font-size: 20px;">
+              <StarFilled />
+            </el-icon>
+            <span style="font-size: 0.95em; color: #606266;">收藏数: {{ currentVideoInfo?.favorite }}</span>
+          </div>
+
+        </div>
+        <hr>
+
+        <!-- 视频标题 -->
+        <div class="video-title" style="margin-bottom: 12px;">
+          <h3 style="font-size: 1.8em; font-weight: 600; color: #333; line-height: 1.2; margin: 0;">
+            {{ currentVideoInfo?.title }}
+          </h3>
+          <div class="flex gap-2" style="margin-top: 15px;">
+            类别：
+            <el-tag>{{ currentVideoInfo?.category == null ? "未定义" : currentVideoInfo?.category }}</el-tag>
+            <span style="margin-left: 10px;">标签：</span>
+            <el-tag style="margin-left: 6px;" type="success"
+              v-for="(value, index) in currentVideoInfo?.tag?.replace(/^\[|\]$/g, '')?.split(',') || []" :key="index">
+              {{ value }}
+            </el-tag>
+          </div>
+        </div>
+
+        <!-- 作者信息 -->
+        <div class="author-info" style="display: flex; align-items: center; margin-bottom: 12px;">
+          <el-avatar :size="40" :src="currentVideoInfo?.user?.avatar" style="margin-right: 12px;"></el-avatar>
+          <div style="display: flex; flex-direction: column;">
+            <span style="font-weight: 500; color: #555;">{{ currentVideoInfo?.user?.nickname }}</span>
+          </div>
+          <el-button type="primary" size="small" style="margin-left: 20px;" v-if="true">+关注</el-button>
+          <el-button type="primary" size="small" v-if="true" @mouseenter="follow_hover = true"
+            @mouseleave="follow_hover = false" :style="{
+              marginLeft: '20px',
+              backgroundColor: follow_hover ? '#FFE0E0' : '#E0F0FF',
+              color: follow_hover ? '#FF4D4F' : '#409EFF',
+              borderColor: follow_hover ? '#FFE0E0' : '#E0F0FF'
+            }">
+            {{ follow_hover ? '取消关注' : '已关注' }}
+          </el-button>
+        </div>
+
+        <!-- 视频描述 -->
+        <div class="details" style="font-size: 1em; color: #666; line-height: 1.6; white-space: pre-wrap;">
+          {{ currentVideoInfo?.description }}
+        </div>
+
+      </div>
     </div>
 
-    <div class="comment-container" style="width: 100%; text-align: center;">
+
+    <div class="comment-container" style="width: 100%;">
       <div class="inner-container" style="width: 40%; margin: 0 auto;">
         <u-comment :config="config" @submit="submit" @reply-page="replyPage">
         </u-comment>
@@ -46,9 +144,30 @@
 import { onMounted, ref, onBeforeUnmount, reactive } from "vue";
 import videojs from "video.js";
 import "video.js/dist/video-js.css";
-import { videoPlayerBaseUrl, getVideoById } from "@/api/videoApi";
+import { videoPlayerBaseUrl, getVideoById, getVideoLikeAndFavorStatus, likeVideo, cancelLikeVideo, favorVideo, cancelFavorVideo } from "@/api/videoApi";
 import { useRoute } from "vue-router";
 import { useStore } from "@/stores";
+import { View, Star, CaretTop, StarFilled } from "@element-plus/icons-vue";
+
+const follow_hover = ref(false);
+
+// 当前登录用户对当前界面的视频的点赞状态以及收藏状态和对视频作者的关注状态
+const status = reactive({
+  follow: false,
+  likes: false,
+  favor: false,
+})
+
+// script setup
+const hoverEnter = (e: MouseEvent) => {
+  const target = e.currentTarget as HTMLElement;
+  if (target) target.style.transform = 'scale(1.1)';
+}
+
+const hoverLeave = (e: MouseEvent) => {
+  const target = e.currentTarget as HTMLElement;
+  if (target) target.style.transform = 'scale(1)';
+}
 
 // 视频 DOM 元素引用
 const videoPlayer = ref<HTMLVideoElement | null>(null);
@@ -186,7 +305,7 @@ const like = (id: string, finish: () => void) => {
 // 回复分页
 const replyPage = ({ parentId, current, size, finish }: CommentReplyPageApi) => {
   getVideoReplyPageList(parentId, current, size).then((resp) => {
-    if(resp.data.status == 200){
+    if (resp.data.status == 200) {
       finish({
         total: resp.data.data.total,
         list: resp.data.data.list
@@ -198,6 +317,74 @@ const replyPage = ({ parentId, current, size, finish }: CommentReplyPageApi) => 
 /**
  * 评论功能结束位置
  */
+
+
+/**
+ * 获取界面的状态信息
+ */
+const getStatus = () => {
+  getVideoLikeAndFavorStatus(route.query.videoId, pinia.currentUser?.id).then((resp) => {
+    if (resp.data.status == 200) {
+      status.likes = resp.data.data.likes;
+      status.favor = resp.data.data.favor;
+    }
+  })
+}
+
+/**
+ * 给当前视频点赞
+ */
+const likeBtnClick = () => {
+  likeVideo(route.query.videoId).then((resp) => {
+    if (resp.data.status == 200) {
+      status.likes = resp.data.data.likes;
+      status.favor = resp.data.data.favor;
+      if (currentVideoInfo?.value) {
+        currentVideoInfo.value.likes = (currentVideoInfo.value.likes || 0) + 1;
+      }
+    }
+  })
+}
+
+/**
+ * 给当前视频取消点赞
+ */
+const cancelLikeBtnClick = () => {
+  cancelLikeVideo(route.query.videoId).then((resp) => {
+    if (resp.data.status == 200) {
+      status.likes = resp.data.data.likes;
+      status.favor = resp.data.data.favor;
+      if (currentVideoInfo?.value) {
+        currentVideoInfo.value.likes = (currentVideoInfo.value.likes || 1) - 1;
+      }
+    }
+  })
+}
+
+const favorBtnClick = () => {
+  favorVideo(route.query.videoId).then((resp) => {
+    if (resp.data.status == 200) {
+      status.likes = resp.data.data.likes;
+      status.favor = resp.data.data.favor;
+      if (currentVideoInfo?.value) {
+        currentVideoInfo.value.favorite = (currentVideoInfo.value.favorite || 0) + 1;
+      }
+    }
+  })
+}
+
+const cancelFavorBtnClick = () => {
+  cancelFavorVideo(route.query.videoId).then((resp) => {
+    if (resp.data.status == 200) {
+      status.likes = resp.data.data.likes;
+      status.favor = resp.data.data.favor;
+      if (currentVideoInfo?.value) {
+        currentVideoInfo.value.favorite = (currentVideoInfo.value.favorite || 1) - 1
+      }
+    }
+  })
+}
+
 
 /**
  * 更新播放器播放源
@@ -274,6 +461,7 @@ const getCurrentVideo = async () => {
       const resolutionJson: Record<string, string> = JSON.parse(
         currentVideoInfo.value.resolution
       );
+      console.log(currentVideoInfo.value)
       resolutionPath.value = resolutionJson;
       if (resolutionJson.master) {
         currentResolution.value = "master";
@@ -289,6 +477,7 @@ const getCurrentVideo = async () => {
 onMounted(() => {
   getCurrentVideo();
   getCommentList(currentVideoId, 1, 10);
+  getStatus();
 });
 
 onBeforeUnmount(() => {
@@ -307,6 +496,7 @@ onBeforeUnmount(() => {
 
 .video-wrapper {
   position: relative;
+  margin-top: 100px;
 }
 
 .custom-controls {
