@@ -38,7 +38,8 @@ export interface videoMetadata {
     title: string,
     description: string,
     tags: string[],
-    coverUrl: string
+    coverUrl: string,
+    categoryId: string,
 }
 
 // 文件分块上传参数

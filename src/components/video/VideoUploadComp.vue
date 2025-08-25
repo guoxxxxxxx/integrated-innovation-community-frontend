@@ -37,6 +37,11 @@
             <el-form-item label="标题" prop="title">
                 <el-input v-model="metadataForm.title" />
             </el-form-item>
+            <el-form-item label="类别" prop="categoryId">
+                <el-select v-model="metadataForm.categoryId" placeholder="请选择类别" clearable>
+                    <el-option v-for="(item,key) in allClass" :label="item.category" :value="item.id" :key="key" />
+                </el-select>
+            </el-form-item>
             <el-form-item label="标签" prop="tags">
                 <div style="display: flex;">
                     <el-tag v-for="tag in dynamicTags" :key="tag" closable :disable-transitions="false"
@@ -66,14 +71,30 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive, nextTick, watch } from 'vue'
+import { ref, reactive, nextTick, watch, onMounted } from 'vue'
 import { calculateFileMD5Chunked } from '@/utils/uploadUtils'
 import { ElMessage } from 'element-plus'
 import { uploadFileMultiBlock, checkFileUploadIsOk, fileUploadPreHandle, videoCoverUpload } from '@/api/fileApi'
 import { MAX_IMAGE_SIZE } from '@/api/config'
 import type { InputInstance, FormInstance, FormRules } from 'element-plus'
 import type { FileUploadOtherInfo } from '@/api/entity'
+import { getAllVideoClass } from '@/api/videoApi'
 
+interface VideoClass{
+    id: string,
+    category: string
+}
+
+const allClass = ref<VideoClass[]>([]);
+
+// 获取全部类别
+const getAllClass = () => {
+    getAllVideoClass().then((resp) => {
+        if (resp.data.status == 200) {
+            allClass.value = resp.data.data
+        }
+    })
+}
 
 // 视频文件
 const file = ref<File | null>(null)
@@ -161,6 +182,7 @@ const metadataForm = reactive({
     title: '',
     description: '',
     tags: "",
+    categoryId: ""
 })
 
 // 选择视频封面文件 并上传到后端服务器 返回服务器路径
@@ -303,7 +325,8 @@ async function startUpload(formEl: FormInstance | undefined) {
             title: metadataForm.title,
             description: metadataForm.description,
             tags: dynamicTags.value,
-            coverUrl: remoteCoverPath.value!
+            coverUrl: remoteCoverPath.value!,
+            categoryId: metadataForm.categoryId
         }
     }
     uploading.value = true
@@ -402,6 +425,11 @@ async function startUpload(formEl: FormInstance | undefined) {
         }
     })
 }
+
+onMounted(() => {
+    getAllClass();
+});
+
 </script>
 
 <style scoped>

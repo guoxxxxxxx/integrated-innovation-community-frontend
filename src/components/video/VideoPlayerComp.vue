@@ -2,28 +2,48 @@
   <div class="container" style="width: 100%;">
     <div class="video-container">
       <div class="video-wrapper" @mouseenter="showControls = true" @mouseleave="showControls = false">
-        <video ref="videoPlayer" class="video-js vjs-default-skin" controls preload="auto" width="1200"
-          height="675"></video>
+        <div v-if="currentResolution.length > 0">
+          <video ref="videoPlayer" class="video-js vjs-default-skin" controls preload="auto" width="1200"
+            height="675"></video>
 
-        <!-- 右下角控制面板 -->
-        <div class="custom-controls" :class="{ show: showControls }">
-          <!-- 分辨率切换 -->
-          <div class="control-item">
-            <select v-model="currentResolution" @change="changeResolution(currentResolution)">
-              <option v-for="(path, key) in resolutionPath" :key="key" :value="key">
-                {{ key }}
-              </option>
-            </select>
-          </div>
+          <!-- 右下角控制面板 -->
+          <div class="custom-controls" :class="{ show: showControls }">
+            <!-- 分辨率切换 -->
+            <div class="control-item">
+              <select v-model="currentResolution" @change="changeResolution(currentResolution)">
+                <option v-for="(path, key) in resolutionPath" :key="key" :value="key">
+                  {{ key }}
+                </option>
+              </select>
+            </div>
 
-          <!-- 倍速切换 -->
-          <div class="control-item">
-            <select v-model="currentSpeed" @change="changePlaybackRate(currentSpeed)">
-              <option v-for="rate in speedOptions" :key="rate" :value="rate">
-                {{ rate }}x
-              </option>
-            </select>
+            <!-- 倍速切换 -->
+            <div class="control-item">
+              <select v-model="currentSpeed" @change="changePlaybackRate(currentSpeed)">
+                <option v-for="rate in speedOptions" :key="rate" :value="rate">
+                  {{ rate }}x
+                </option>
+              </select>
+            </div>
           </div>
+        </div>
+
+        <div v-else
+          style="width: 1200px; height: 674px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #fafafa; border: 1px dashed #ddd; border-radius: 12px;">
+          <!-- 表情图标 -->
+          <div style="font-size: 80px; margin-bottom: 20px;">😢</div>
+
+          <!-- 提示文字 -->
+          <h2 style="color: #666; margin-bottom: 12px;">糟糕，视频走丢了！</h2>
+          <p style="color: #999; font-size: 14px; margin-bottom: 24px;">
+            可能被删除或暂时无法访问
+          </p>
+
+          <!-- 操作按钮 -->
+          <el-button type="primary" size="medium" style="background-color: #409EFF; border-color: #409EFF;"
+            @click="$router.push('/')">
+            返回首页
+          </el-button>
         </div>
       </div>
 
@@ -88,9 +108,12 @@
           <h3 style="font-size: 1.8em; font-weight: 600; color: #333; line-height: 1.2; margin: 0;">
             {{ currentVideoInfo?.title }}
           </h3>
-          <div class="flex gap-2" style="margin-top: 15px;">
+          <div style="margin-top: 10px;">
+            发布时间⏰:{{ dayjs(currentVideoInfo?.uploadTime).format("YYYY-MM-DD HH:mm:ss") }}
+          </div>
+          <div class="flex gap-2" style="margin-top: 10px;">
             类别：
-            <el-tag>{{ currentVideoInfo?.category == null ? "未定义" : currentVideoInfo?.category }}</el-tag>
+            <el-tag>{{ currentVideoInfo?.categoryName == null ? "未定义" : currentVideoInfo?.categoryName }}</el-tag>
             <span style="margin-left: 10px;">标签：</span>
             <el-tag style="margin-left: 6px;" type="success"
               v-for="(value, index) in currentVideoInfo?.tag?.replace(/^\[|\]$/g, '')?.split(',') || []" :key="index">
@@ -153,6 +176,7 @@ import { useRoute } from "vue-router";
 import { useStore } from "@/stores";
 import { View, Star, CaretTop, StarFilled } from "@element-plus/icons-vue";
 import { cancelFollowUser, followUser, queryUserFollowStatus } from '@/api/userRequest'
+import dayjs from "dayjs";
 
 const follow_hover = ref(false);
 
@@ -213,8 +237,6 @@ const changeCommentPage = (pageNo: number) => {
  * @param targetId 目标用户id
  */
 const queryFollowStatus = (sourceId: any, targetId: any) => {
-  console.log("???");
-
   queryUserFollowStatus(sourceId, targetId).then((resp) => {
     if (resp.data.status === 200) {
       status.follow = resp.data.data.status;
@@ -503,15 +525,19 @@ const getCurrentVideo = async () => {
     const resp = await getVideoById(videoId);
     if (resp.data.status === 200) {
       currentVideoInfo.value = resp.data.data;
-      const resolutionJson: Record<string, string> = JSON.parse(
-        currentVideoInfo.value.resolution
-      );
-      console.log(currentVideoInfo.value)
-      resolutionPath.value = resolutionJson;
-      if (resolutionJson.master) {
-        currentResolution.value = "master";
-        const videoSrc = videoPlayerBaseUrl + resolutionJson.master;
-        initPlayer(videoSrc);
+      if (currentVideoInfo.value.resolution) {
+        const resolutionJson: Record<string, string> = JSON.parse(
+          currentVideoInfo.value.resolution
+        );
+        resolutionPath.value = resolutionJson;
+        if (resolutionJson.master) {
+          currentResolution.value = "master";
+          const videoSrc = videoPlayerBaseUrl + resolutionJson.master;
+          initPlayer(videoSrc);
+        }
+      }
+      else {
+        currentResolution.value = "";
       }
     }
   } catch (error) {

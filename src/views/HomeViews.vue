@@ -44,18 +44,21 @@
 
     <!-- 视频列表 -->
     <div class="video-grid" style="margin-top: 90px;">
-      <div class="video-card" v-for="i in videoList.slice(0, 4)" :key="i.id">
-        <div class="video-thumbnail">
-          <img :src="imageBaseUrl + i.coverName" alt="视频缩略图">
-          <span class="duration">{{ formatDuration(i.duration) }}</span>
-        </div>
-        <div class="video-info">
-          <h3 class="video-title">{{ i.title }}</h3>
-          <div class="video-meta">
-            <span class="author">作者名称</span>
-            <span class="views">播放量: {{ i.viewCount }}</span>
+      <div class="video-card" v-for="i in videoList.slice(4, 20)" :key="i.id">
+          <div class="video-thumbnail" @click="playVideo(i.id)">
+            <img :src="imageBaseUrl + i.coverName" alt="视频缩略图">
+            <span class="duration">{{ formatDuration(i.duration) }}</span>
           </div>
-        </div>
+          <div class="video-info">
+            <h3 class="video-title" @click="playVideo(i.id)">{{ i.title }}</h3>
+            <div class="video-meta" style="width: 100%; display: flex; justify-content: space-between;">
+              <div style="display: flex; align-items: center;">
+                <el-avatar size="small" :src="i.user.avatar" />
+                <span class="author">{{ i.user.nickname }}</span>
+              </div>
+              <span class="views">播放量: {{ i.viewCount }}</span>
+            </div>
+          </div>
       </div>
     </div>
 

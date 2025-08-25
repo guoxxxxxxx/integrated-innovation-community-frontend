@@ -82,3 +82,12 @@ export const cancelFavorVideo = (videoId: any) => {
 export const getVideoLikeAndFavorStatus = (videoId: any, userId: any) => {
     return request.get(`/video/videoLikes/${videoId}/${userId}`)
 }
+
+
+/**
+ * 获取视频的所有类别
+ * @returns 所有视频分类
+ */
+export const getAllVideoClass = () => {
+    return request.get(`/video/videoCategory`)
+}
