@@ -27,3 +27,34 @@ export const updateUserInfoById = (id: any, nickname: any, avatar: any, gender: 
   })
 }
 
+
+/**
+ * 根据id查询指定用户的关注状态
+ * @param sourceId 源用户id
+ * @param targetId 目的用户id
+ * @returns 关注状态
+ */
+export const queryUserFollowStatus = (sourceId: any, targetId: any) => {
+  return request.get(`/user/follow/${sourceId}/${targetId}`)
+}
+
+
+/**
+ * 根据目标用户id关注用户
+ * @param targetId 目标用户id
+ * @returns 关注状态
+ */
+export const followUser = (targetId: any) => {
+  return request.post(`/user/follow/${targetId}`)
+}
+
+
+/**
+ * 根据目标用户id取消关注用户
+ * @param targetId 目标用户id
+ * @returns 关注状态
+ */
+export const cancelFollowUser = (targetId: any) => {
+  return request.post(`/user/follow/cancelFollow/${targetId}`)
+}
+

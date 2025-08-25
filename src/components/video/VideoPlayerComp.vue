@@ -105,16 +105,20 @@
           <div style="display: flex; flex-direction: column;">
             <span style="font-weight: 500; color: #555;">{{ currentVideoInfo?.user?.nickname }}</span>
           </div>
-          <el-button type="primary" size="small" style="margin-left: 20px;" v-if="true">+关注</el-button>
-          <el-button type="primary" size="small" v-if="true" @mouseenter="follow_hover = true"
-            @mouseleave="follow_hover = false" :style="{
-              marginLeft: '20px',
-              backgroundColor: follow_hover ? '#FFE0E0' : '#E0F0FF',
-              color: follow_hover ? '#FF4D4F' : '#409EFF',
-              borderColor: follow_hover ? '#FFE0E0' : '#E0F0FF'
-            }">
-            {{ follow_hover ? '取消关注' : '已关注' }}
-          </el-button>
+          <div class="follow-btn" v-if="pinia.currentUser?.id !== currentVideoInfo?.userId">
+            <el-button type="primary" size="small" style="margin-left: 20px;" v-if="!status.follow"
+              @click="follow(currentVideoInfo?.userId)">+关注</el-button>
+            <el-button type="primary" size="small" v-else @mouseenter="follow_hover = true"
+              @click="cancelFollow(currentVideoInfo?.userId)" @mouseleave="follow_hover = false" :style="{
+                marginLeft: '20px',
+                backgroundColor: follow_hover ? '#FFE0E0' : '#E0F0FF',
+                color: follow_hover ? '#FF4D4F' : '#409EFF',
+                borderColor: follow_hover ? '#FFE0E0' : '#E0F0FF'
+              }">
+              {{ follow_hover ? '取消关注' : '已关注' }}
+            </el-button>
+          </div>
+
         </div>
 
         <!-- 视频描述 -->
@@ -148,6 +152,7 @@ import { videoPlayerBaseUrl, getVideoById, getVideoLikeAndFavorStatus, likeVideo
 import { useRoute } from "vue-router";
 import { useStore } from "@/stores";
 import { View, Star, CaretTop, StarFilled } from "@element-plus/icons-vue";
+import { cancelFollowUser, followUser, queryUserFollowStatus } from '@/api/userRequest'
 
 const follow_hover = ref(false);
 
@@ -200,6 +205,46 @@ const commentPageNo = ref(1);
 const changeCommentPage = (pageNo: number) => {
   commentPageNo.value = pageNo;
   getCommentList(currentVideoId, pageNo, commentPageSize.value)
+}
+
+/**
+ * 查询指定用户的关注状态
+ * @param sourceId 源用户id
+ * @param targetId 目标用户id
+ */
+const queryFollowStatus = (sourceId: any, targetId: any) => {
+  console.log("???");
+
+  queryUserFollowStatus(sourceId, targetId).then((resp) => {
+    if (resp.data.status === 200) {
+      status.follow = resp.data.data.status;
+    }
+  })
+}
+
+
+/**
+ * 关注用户
+ * @param targetId 目标用户id
+ */
+const follow = (targetId: any) => {
+  followUser(targetId).then((resp) => {
+    if (resp.data.status === 200) {
+      status.follow = resp.data.data.status;
+    }
+  })
+}
+
+/**
+ * 取消关注用户
+ * @param targetId 目标用户id
+ */
+const cancelFollow = (targetId: any) => {
+  cancelFollowUser(targetId).then((resp) => {
+    if (resp.data.status === 200) {
+      status.follow = resp.data.data.status;
+    }
+  })
 }
 
 /**
@@ -472,6 +517,7 @@ const getCurrentVideo = async () => {
   } catch (error) {
     console.error("获取视频失败:", error);
   }
+  queryFollowStatus(pinia.currentUser?.id, currentVideoInfo.value.userId)
 };
 
 onMounted(() => {
