@@ -17,6 +17,7 @@ export interface QueryCondition {
     endUploadTime?: string | any,
     sortByUploadTime?: boolean | any,
     sortByUploadTimeDesc?: boolean | any,
+    categoryId?: number | any,
 }
 /**
  * 根据条件获取分页查询信息

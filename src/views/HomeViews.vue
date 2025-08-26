@@ -3,9 +3,9 @@
     <!-- 视频分类导航 -->
     <div class="category-nav-wrapper">
       <div class="category-nav">
-        <a-button v-for="category in categories" :key="category" type="text" class="category-btn"
-          :class="{ active: currentCategory === category }" @click="currentCategory = category">
-          {{ category }}
+        <a-button v-for="category in categoryList" :key="category.id" type="text" class="category-btn"
+          :class="{ active: currentCategoryId == category.id }" @click="currentCategoryId = category.id; getVideoList();">
+          {{ category.category }}
         </a-button>
       </div>
     </div>
@@ -23,7 +23,8 @@
 
       <!-- 右侧视频列表 -->
       <div class="video-grid" style="width: 45%;">
-        <div class="video-card" v-for="i in videoList.slice(0, 4)" :key="i.id" style="width: 100%; margin-bottom: 20px;">
+        <div class="video-card" v-for="i in videoList.slice(0, 4)" :key="i.id"
+          style="width: 100%; margin-bottom: 20px;">
           <div class="video-thumbnail" @click="playVideo(i.id)">
             <img :src="imageBaseUrl + i.coverName" alt="视频缩略图">
             <span class="duration">{{ formatDuration(i.duration) }}</span>
@@ -45,20 +46,20 @@
     <!-- 视频列表 -->
     <div class="video-grid" style="margin-top: 90px;">
       <div class="video-card" v-for="i in videoList.slice(4, 20)" :key="i.id">
-          <div class="video-thumbnail" @click="playVideo(i.id)">
-            <img :src="imageBaseUrl + i.coverName" alt="视频缩略图">
-            <span class="duration">{{ formatDuration(i.duration) }}</span>
-          </div>
-          <div class="video-info">
-            <h3 class="video-title" @click="playVideo(i.id)">{{ i.title }}</h3>
-            <div class="video-meta" style="width: 100%; display: flex; justify-content: space-between;">
-              <div style="display: flex; align-items: center;">
-                <el-avatar size="small" :src="i.user.avatar" />
-                <span class="author">{{ i.user.nickname }}</span>
-              </div>
-              <span class="views">播放量: {{ i.viewCount }}</span>
+        <div class="video-thumbnail" @click="playVideo(i.id)">
+          <img :src="imageBaseUrl + i.coverName" alt="视频缩略图">
+          <span class="duration">{{ formatDuration(i.duration) }}</span>
+        </div>
+        <div class="video-info">
+          <h3 class="video-title" @click="playVideo(i.id)">{{ i.title }}</h3>
+          <div class="video-meta" style="width: 100%; display: flex; justify-content: space-between;">
+            <div style="display: flex; align-items: center;">
+              <el-avatar size="small" :src="i.user.avatar" />
+              <span class="author">{{ i.user.nickname }}</span>
             </div>
+            <span class="views">播放量: {{ i.viewCount }}</span>
           </div>
+        </div>
       </div>
     </div>
 
@@ -78,14 +79,27 @@
 import { onMounted, ref } from 'vue'
 import { ElPagination, ElCarousel, ElCarouselItem } from 'element-plus'
 import { ArrowUp } from '@element-plus/icons-vue'
-import type { VideoInfo } from '@/api/entity';
+import type { VideoCategory, VideoInfo } from '@/api/entity';
 import { getPage } from '@/api/videoApi'
 import type { QueryCondition } from '@/api/videoApi'
 import { imageBaseUrl } from '@/api/graphApi'
 import router from '@/router';
+import { getAllVideoClass } from '@/api/videoApi'
 
-const currentCategory = ref('推荐')
-const categories = ['推荐', '音乐', '游戏', '动画', '科技', '生活', '美食', '体育']
+const currentCategoryId = ref(0)
+const categoryList = ref<VideoCategory[]>([])
+
+
+// 向后端查询视频类别信息
+const queryVideoCategoryList = () => {
+  getAllVideoClass().then(res => {
+    categoryList.value = res.data.data
+    categoryList.value.unshift({
+      id: '0',
+      category: '推荐'
+    })
+  })
+}
 
 // 视频列表
 const videoList = ref<VideoInfo[]>([])
@@ -94,6 +108,7 @@ const videoList = ref<VideoInfo[]>([])
 const queryCondition = ref<QueryCondition>({
   pageNo: 1,
   pageSize: 16,
+  categoryId: currentCategoryId,
 })
 // 向后端服务器请求视频列表
 const getVideoList = () => {
@@ -122,6 +137,7 @@ const playVideo = (videoId: number) => {
 // 进入界面加载数据
 onMounted(() => {
   getVideoList()
+  queryVideoCategoryList();
 })
 
 const carouselItems = ref([
@@ -245,12 +261,18 @@ const scrollToTop = () => {
   font-size: 14px;
   line-height: 1.4;
 
-  display: -webkit-box;            /* Flex-like的伸缩盒子 */
-  -webkit-box-orient: vertical;    /* 垂直排列 */
-  -webkit-line-clamp: 2;           /* 限制最多两行 */
-  overflow: hidden;                /* 超出隐藏 */
-  text-overflow: ellipsis;         /* 多余显示省略号 */
-  word-break: break-word;          /* 避免长单词撑破 */
+  display: -webkit-box;
+  /* Flex-like的伸缩盒子 */
+  -webkit-box-orient: vertical;
+  /* 垂直排列 */
+  -webkit-line-clamp: 2;
+  /* 限制最多两行 */
+  overflow: hidden;
+  /* 超出隐藏 */
+  text-overflow: ellipsis;
+  /* 多余显示省略号 */
+  word-break: break-word;
+  /* 避免长单词撑破 */
 }
 
 .video-meta {

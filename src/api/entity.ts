@@ -72,3 +72,11 @@ export interface VideoInfo {
     likes: number,
     favorite: number
 }
+
+/**
+ * 视频类别信息
+ */
+export interface VideoCategory{
+    id: any,
+    category: any
+}
