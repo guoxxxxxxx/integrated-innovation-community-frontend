@@ -3,8 +3,25 @@
     <div class="video-container">
       <div class="video-wrapper">
         <div v-if="currentResolution.length > 0">
+
+          <div class="danmu-layer" style="position: absolute; z-index: 10;">
+            <div v-for="(danmu, index) in danmuList" :key="danmu.barrage.id" class="danmu-item" :style="{
+              top: danmu.top + 'px',
+              color: danmu.color,
+              fontSize: danmu.fontSize + 'px',
+              left: danmu.left + 'px',
+              transform: 'translateX(' + danmu.left + 'px)',
+              transition: 'transform ' + danmu.duration + 's linear',
+              position: 'absolute',
+            }" @transitionend="removeDanmu(danmu.id)">
+              {{ danmu.barrage.content }}
+            </div>
+          </div>
+
           <video ref="videoPlayer" class="video-js vjs-default-skin" controls preload="auto" width="1200" height="675"
             @mouseenter="showControls = true" @mouseleave="showControls = false"></video>
+
+
 
           <!-- 右下角控制面板 -->
           <div class="custom-controls" :class="{ show: showControls }">
@@ -199,8 +216,20 @@ import {
 } from "@/api/commentApi";
 import type { VideoBarrage } from "@/api/entity";
 
+const trackHeight = 40              // 每个轨道高度
+interface DanMu {
+  id: number,
+  top: number,
+  color: string,
+  fontSize: number,
+  left: number,      // 初始位置
+  duration: number,      // 8秒飞完全屏，可修改速度
+  barrage: VideoBarrage,
+}
+
 // 弹幕列表
 const videoBarrageList = ref<VideoBarrage[]>([]);
+const danmuList = ref<DanMu[]>([]);
 
 const follow_hover = ref(false);
 
@@ -247,6 +276,8 @@ const currentVideoId = route.query.videoId;
 const barrageText = ref<string>("");
 const videoPlayProgress = ref<number>(0);
 
+const newBarrage = ref<VideoBarrage>()
+
 // 发送弹幕
 const sendBarrage = () => {
   if (barrageText.value.length == 0) {
@@ -257,6 +288,10 @@ const sendBarrage = () => {
     if (resp.data.status == 200) {
       ElMessage.success(`发送成功`);
       barrageText.value = "";
+      newBarrage.value = resp.data.data;
+      addDanmu(newBarrage.value!);
+      console.log(newBarrage.value);
+      
     }
   });
 }
@@ -266,12 +301,12 @@ let timeTask: any = null;
 // 定时获取弹幕
 const getVideoBarrageList = () => {
   timeTask = window.setInterval(() => {
-    getVideoBarrage(currentVideoId, 50, videoPlayProgress.value, videoPlayProgress.value + 5).then((resp) => {
+    getVideoBarrage(currentVideoId, 50, videoPlayProgress.value, videoPlayProgress.value + 2).then((resp) => {
       if (resp.data.status == 200) {
-        videoBarrageList.value = resp.data.data.data;
+        videoBarrageList.value.push(...resp.data.data.data);
       }
     });
-  }, 6000);
+  }, 2000);
 }
 
 const showControls = ref(false);
@@ -400,14 +435,6 @@ const getCommentList = (
       commentTotal.value = resp.data.data.total;
     }
   });
-};
-
-// 点赞按钮事件
-const like = (id: string, finish: () => void) => {
-  console.log("点赞: " + id);
-  setTimeout(() => {
-    finish();
-  }, 200);
 };
 
 // 回复分页
@@ -539,7 +566,6 @@ const initPlayer = (src: string) => {
     // 监听播放进度
     player.on('timeupdate', () => {
       videoPlayProgress.value = player.currentTime(); // 秒
-      console.log('视频播放时间:', videoPlayProgress.value);
     });
   } else {
     updateSource(src);
@@ -593,6 +619,74 @@ const getCurrentVideo = async () => {
   queryFollowStatus(pinia.currentUser?.id, currentVideoInfo.value.userId)
 };
 
+let idCounter = 0
+const laneCount = 10 // 弹幕轨道数
+const lanes = Array(laneCount).fill(null) // 每条轨道存放最后一个弹幕的结束时间
+
+// 分配轨道
+function getAvailableLane(duration: number) {
+  const now = Date.now()
+  for (let i = 0; i < laneCount; i++) {
+    if (!lanes[i] || lanes[i] < now) {
+      lanes[i] = now + duration * 1000
+      return i
+    }
+  }
+  // 如果都被占用，随机返回一个
+  const randomLane = Math.floor(Math.random() * laneCount)
+  lanes[randomLane] = now + duration * 1000
+  return randomLane
+}
+
+// 添加弹幕
+function addDanmu(barrage: VideoBarrage) {
+  if (!barrage) return
+  const duration = 8 // 弹幕飞屏时间
+  const lane = getAvailableLane(duration)
+  const laneHeight = 360 / laneCount
+
+
+  const danmu: DanMu = {
+    id: idCounter++,
+    top: lane * laneHeight,
+    color: '#' + Math.floor(Math.random() * 0xffffff).toString(16),
+    fontSize: 16 + Math.random() * 8,
+    left: 1400,      // 初始位置
+    duration: 6.0 / currentSpeed.value,      // 8秒飞完全屏，可修改速度
+    barrage: barrage,
+  }
+
+  danmuList.value.push(danmu)
+
+  // 延迟设置目标位置，触发 CSS transition
+  // 等 Vue 渲染出初始位置，再改为目标位置
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      danmu.left = -danmu.barrage.content.length * 16 - 50;
+    });
+  });
+}
+
+// 移除弹幕
+function removeDanmu(id: number) {
+  const index = danmuList.value.findIndex(d => d.id === id)
+  if (index !== -1) danmuList.value.splice(index, 1)
+}
+
+let showBarrageSchelude: any = null;
+
+const showBarrageTimeTask = () => {
+  showBarrageSchelude = window.setInterval(() => {
+    for (let i = 0; i < videoBarrageList.value.length; i++) {
+      if (videoBarrageList.value[i].videoPlayProgress <= videoPlayProgress.value) {
+        addDanmu(videoBarrageList.value[i])
+        videoBarrageList.value.splice(i, 1)
+        i--;
+      }
+    }
+  }, 10)
+}
+
 onMounted(() => {
   getCurrentVideo();
   getCommentList(currentVideoId, 1, 10);
@@ -601,6 +695,10 @@ onMounted(() => {
   // 启动定时获取弹幕信息的定时任务
   if (timeTask == null) {
     getVideoBarrageList();
+  }
+
+  if (showBarrageSchelude == null) {
+    showBarrageTimeTask();
   }
 });
 
@@ -613,6 +711,10 @@ onBeforeUnmount(() => {
   if (timeTask) {
     clearInterval(timeTask);
     timeTask = null;
+  }
+
+  if (showBarrageSchelude) {
+    clearInterval(showBarrageSchelude);
   }
 });
 </script>
