@@ -79,7 +79,7 @@ const router = createRouter({
           path: "/commentDemo",
           name: "commentDemo",
           component: () => import("@/views/demo/CommentDemoViews.vue")  
-        }
+        },
       ]
     }
   ],

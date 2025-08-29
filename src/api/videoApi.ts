@@ -1,5 +1,6 @@
 import request from "./request"
 import { baseUrl } from "./request";
+import type {} from './entity'
 
 export const videoPlayerBaseUrl = baseUrl + '/video/videos/';
 

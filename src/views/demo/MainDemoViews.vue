@@ -17,6 +17,8 @@
             <router-link to="/videoPlayer">视频播放</router-link>
             <span>｜｜</span>
             <router-link to="/commentDemo">评论demo</router-link>
+            <span>｜｜</span>
+            <router-link to="/barrageDemo">弹幕demo</router-link>
         </div>
         <!-- 主体 -->
         <router-view></router-view>

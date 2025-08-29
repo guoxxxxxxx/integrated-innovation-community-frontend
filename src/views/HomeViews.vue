@@ -64,7 +64,7 @@
     </div>
 
     <div style="display: flex; justify-content: center;">
-      <el-pagination background layout="prev, pager, next" :total="1000" />
+      <el-pagination background layout="prev, pager, next" :total="pageSettings.total" :page-size="pageSettings.pageSize" @current-change="changePage"/>
     </div>
 
     <!-- 一键滚动到顶的按钮 -->
@@ -76,7 +76,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, reactive } from 'vue'
 import { ElPagination, ElCarousel, ElCarouselItem } from 'element-plus'
 import { ArrowUp } from '@element-plus/icons-vue'
 import type { VideoCategory, VideoInfo } from '@/api/entity';
@@ -86,8 +86,21 @@ import { imageBaseUrl } from '@/api/graphApi'
 import router from '@/router';
 import { getAllVideoClass } from '@/api/videoApi'
 
+const pageSettings = reactive({
+  total: 0,
+  pageSize: 20,
+  pageNo: 1,
+});
+
 const currentCategoryId = ref(0)
 const categoryList = ref<VideoCategory[]>([])
+
+// 改变页码
+const changePage = (pageNo: number) => {
+  pageSettings.pageNo = pageNo;
+  queryCondition.value.pageNo = pageNo;
+  getVideoList();
+}
 
 
 // 向后端查询视频类别信息
@@ -106,8 +119,8 @@ const videoList = ref<VideoInfo[]>([])
 
 // 视频列表查询条件
 const queryCondition = ref<QueryCondition>({
-  pageNo: 1,
-  pageSize: 16,
+  pageNo: pageSettings.pageNo,
+  pageSize: pageSettings.pageSize,
   categoryId: currentCategoryId,
 })
 // 向后端服务器请求视频列表
@@ -115,7 +128,8 @@ const getVideoList = () => {
   getPage(queryCondition.value).then(resp => {
     if (resp.data.status == 200) {
       videoList.value = resp.data.data.data
-      console.log(videoList.value)
+      pageSettings.total = resp.data.data.total
+      pageSettings.pageNo = resp.data.data.currentPage
     }
   })
 }

@@ -1,10 +1,10 @@
 <template>
   <div class="container" style="width: 100%;">
     <div class="video-container">
-      <div class="video-wrapper" @mouseenter="showControls = true" @mouseleave="showControls = false">
+      <div class="video-wrapper">
         <div v-if="currentResolution.length > 0">
-          <video ref="videoPlayer" class="video-js vjs-default-skin" controls preload="auto" width="1200"
-            height="675"></video>
+          <video ref="videoPlayer" class="video-js vjs-default-skin" controls preload="auto" width="1200" height="675"
+            @mouseenter="showControls = true" @mouseleave="showControls = false"></video>
 
           <!-- 右下角控制面板 -->
           <div class="custom-controls" :class="{ show: showControls }">
@@ -25,6 +25,11 @@
                 </option>
               </select>
             </div>
+          </div>
+          <div class="barrage-input"
+            style="width: 100%; margin-top: 10px; padding-left: 20px; padding-right: 20px; display: flex; justify-content: space-between;">
+            <el-input v-model="barrageText" style="width: 100%; padding-right: 10px;" placeholder="发送弹幕" />
+            <el-button type="primary" @click="sendBarrage">发送</el-button>
           </div>
         </div>
 
@@ -177,6 +182,25 @@ import { useStore } from "@/stores";
 import { View, Star, CaretTop, StarFilled } from "@element-plus/icons-vue";
 import { cancelFollowUser, followUser, queryUserFollowStatus } from '@/api/userRequest'
 import dayjs from "dayjs";
+import emoji from "@/assets/static/emoji/emoji";
+import type {
+  CommentReplyPageApi,
+  CommentSubmitApi,
+  ConfigApi,
+} from "undraw-ui";
+import { ElMessage } from "element-plus";
+import {
+  getVideoCommentPageList,
+  sendVideoComment,
+  sendVideoReply,
+  getVideoReplyPageList,
+  sendVideoBarrage,
+  getVideoBarrage
+} from "@/api/commentApi";
+import type { VideoBarrage } from "@/api/entity";
+
+// 弹幕列表
+const videoBarrageList = ref<VideoBarrage[]>([]);
 
 const follow_hover = ref(false);
 
@@ -218,6 +242,37 @@ const currentVideoInfo = ref<any>(null);
 
 const route = useRoute();
 const currentVideoId = route.query.videoId;
+
+// 待要发送的弹幕信息
+const barrageText = ref<string>("");
+const videoPlayProgress = ref<number>(0);
+
+// 发送弹幕
+const sendBarrage = () => {
+  if (barrageText.value.length == 0) {
+    ElMessage.warning("请输入弹幕内容");
+    return;
+  }
+  sendVideoBarrage(currentVideoId, barrageText.value, videoPlayProgress.value).then((resp) => {
+    if (resp.data.status == 200) {
+      ElMessage.success(`发送成功`);
+      barrageText.value = "";
+    }
+  });
+}
+
+let timeTask: any = null;
+
+// 定时获取弹幕
+const getVideoBarrageList = () => {
+  timeTask = window.setInterval(() => {
+    getVideoBarrage(currentVideoId, 50, videoPlayProgress.value, videoPlayProgress.value + 5).then((resp) => {
+      if (resp.data.status == 200) {
+        videoBarrageList.value = resp.data.data.data;
+      }
+    });
+  }, 6000);
+}
 
 const showControls = ref(false);
 
@@ -272,20 +327,6 @@ const cancelFollow = (targetId: any) => {
 /**
  * 评论功能开始位置
  */
-import emoji from "@/assets/static/emoji/emoji";
-import type {
-  CommentReplyPageApi,
-  CommentSubmitApi,
-  ConfigApi,
-  CommentApi,
-} from "undraw-ui";
-import { ElMessage } from "element-plus";
-import {
-  getVideoCommentPageList,
-  sendVideoComment,
-  sendVideoReply,
-  getVideoReplyPageList
-} from "@/api/commentApi";
 
 // 配置项
 const config = reactive<ConfigApi>({
@@ -494,6 +535,12 @@ const initPlayer = (src: string) => {
     player.ready(() => {
       player.playbackRate(currentSpeed.value);
     });
+
+    // 监听播放进度
+    player.on('timeupdate', () => {
+      videoPlayProgress.value = player.currentTime(); // 秒
+      console.log('视频播放时间:', videoPlayProgress.value);
+    });
   } else {
     updateSource(src);
   }
@@ -550,12 +597,22 @@ onMounted(() => {
   getCurrentVideo();
   getCommentList(currentVideoId, 1, 10);
   getStatus();
+
+  // 启动定时获取弹幕信息的定时任务
+  if (timeTask == null) {
+    getVideoBarrageList();
+  }
 });
 
 onBeforeUnmount(() => {
   if (player) {
     player.dispose();
     player = null;
+  }
+
+  if (timeTask) {
+    clearInterval(timeTask);
+    timeTask = null;
   }
 });
 </script>

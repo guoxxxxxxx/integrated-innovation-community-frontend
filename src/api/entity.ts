@@ -80,3 +80,30 @@ export interface VideoCategory{
     id: any,
     category: any
 }
+
+
+/**
+ * socket消息
+ */
+export interface SocketMessage {
+    type: string,
+    data: string | any,
+    vid: number | any,
+    start: number | any,
+    end: number | any,
+    maxCount: number | any,
+    timestamp: number | any,
+    videoPlayProgress: number | any,
+}
+
+
+/**
+ * 弹幕实体
+ */
+export interface VideoBarrage {
+    id: any,
+    vid: any,
+    uid: any,
+    content: any,
+    videoPlayProgress: any,
+}
